@@ -311,7 +311,7 @@ export class ProductsController {
         const [producto, total] = await this._productos.findAndCount(
             {
                 where: [{ modelo: Like('%' + keyword + '%'), enviar_distribucion:true, enviar_ventas:true}, {codigo: Like('%' + keyword + '%'), enviar_distribucion:true, enviar_ventas:true}  ],
-          /*       order: { fecha_de_envio_ventas: "DESC" },  */
+                order: { fecha_de_envio_ventas: "ASC" }, 
         
             
                 relations: ['estampado', 'distribucion', 'distribucion.talle','distribucion.local','distribucion.usuario'],
@@ -406,6 +406,9 @@ export class ProductsController {
 
             })
 
+            dataTalles.estado_envio = true;
+
+            await MODELOS._distribucion.save(dataTalles);
 
             return {
                 ok: true,
