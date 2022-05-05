@@ -1,9 +1,16 @@
-import { Controller, Delete, Get, Param, Post, Put, Query, Request } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Put, Query, Req, Request } from '@nestjs/common';
 import { AppDataSource } from 'src/DBconfig/DataBase';
+import { Front_Distribucion_Productos_Ventas } from 'src/interface/interfaceGB';
+import { Distribucion } from 'src/models/produccion/distribucion_producto';
+import { DistribucionTalle } from 'src/models/produccion/distribucion_talles';
 import { Estampado } from 'src/models/produccion/estampados';
 import { Producto } from 'src/models/produccion/producto';
 import { EstructuraTaller, Taller } from 'src/models/produccion/taller';
+import { ProductoVentas } from 'src/models/ventas/producto_ventas';
+import { TallesVentas } from 'src/models/ventas/talles_ventas';
+import { MODELOS } from 'src/todos_modelos/modelos';
 import { Like, Repository } from 'typeorm';
+import { addYears, subYears, format} from 'date-fns';
 
 @Controller('products')
 export class ProductsController {
@@ -11,6 +18,10 @@ export class ProductsController {
     _productos = AppDataSource.getRepository(Producto);
     _estampado = AppDataSource.getRepository(Estampado);
     _taller = AppDataSource.getRepository(Taller);
+    _productosVentas = AppDataSource.getRepository(ProductoVentas);
+    _tallesVentas = AppDataSource.getRepository(TallesVentas);
+    _distribucion = AppDataSource.getRepository(Distribucion);
+    _distribucionTalles = AppDataSource.getRepository(DistribucionTalle);
 
     
 
@@ -19,36 +30,47 @@ export class ProductsController {
     async postNuevoProducto(@Request() request: Request): Promise<any> {
 
         //Creacion de producto
-        let productos:any = request.body as unknown as Producto;
+
+        try {
+            let productos:any = request.body as unknown as Producto;
 
         
-        
-        const producto:any = this._productos.create(productos);
+            const producto:any = await this._productos.create(productos);
 
+            
+    
+    
+          
+    
+            //Creacion de estampado
+     
+            //const taller = await this._taller.findOne({where: {id: productos.id_taller}});
+            producto.taller = productos.id_taller;
+    
+            await this._productos.save(producto);
 
-      
-
-        //Creacion de estampado
-        if(producto.estado_estampado == true){
-
-            const estampados = this._estampado.create();
-            estampados.producto = producto;
-            await this._estampado.save(estampados);
-
+            if(producto.estado_estampado == true){
+    
+                const estampados = await this._estampado.create();
+                estampados.producto = producto.id;
+                await this._estampado.save(estampados);
+    
+            }
+    
+            return {
+                ok: true,
+                message: 'Producto creado con exito',
+                producto
+            }
+        } catch (error) {
+            console.log(error)
+            return{
+                ok: false,
+                message: 'Error al crear producto',
+                error
+            }
         }
-        const taller = await this._taller.findOne({where: {id: productos.id_taller}});
-
-        producto.taller = taller;
-
-
-        await this._productos.save(producto);
-        
-
-        return {
-            ok: true,
-            message: 'Producto creado con exito',
-            producto
-        }
+       
   
     }
     
@@ -58,24 +80,76 @@ export class ProductsController {
 
 
         try {
-            const updateProducto = request.body as unknown as Producto;
+            const updateProducto = request.body as unknown as any;
 
-            await this._productos
-            .createQueryBuilder()
-            .update(Producto)
-            .set(updateProducto)
-            .where("id = :id", {id: param.id})
-            .execute();
 
-            
+           
+            if( Object.keys(updateProducto)[0] == "cantidad_entregada"){
+                updateProducto.cantidad_actual = updateProducto.cantidad_entregada;
+            }
+
+
+            if(Object.keys(updateProducto)[0] == "total_por_talle" || Object.keys(updateProducto)[0] == "talles"){
+                const producto = await MODELOS._productos.findOne({where: {id: param.id}});
+
+                Object.keys(updateProducto)[0] == "total_por_talle"
+                ? producto.total = producto.talles * updateProducto.total_por_talle
+                : producto.total = updateProducto.talles * producto.total_por_talle
+
+                Object.keys(updateProducto)[0] == "total_por_talle"
+                ? producto.total_por_talle = updateProducto.total_por_talle
+                : producto.talles = updateProducto.talles;
+
+                await MODELOS._productos.save(producto);
+
+            }else if(Object.keys(updateProducto)[0] == 'enviar_ventas'){
+                if(updateProducto.enviar_ventas == true){
+                    const tiempoTranscurrido = Date.now();
+                    const hoy:any = format(new Date(), 'yyyy-MM-dd');
+                    const producto = await MODELOS._productos.findOne({where: {id: param.id}});
+                    producto.enviar_ventas = true;
+                    producto.fecha_de_envio_ventas =  hoy;
+                    await MODELOS._productos.save(producto);
+                }else{
+                    const producto = await MODELOS._productos.findOne({where: {id: param.id}});
+                    producto.enviar_ventas = false;
+                    producto.fecha_de_envio_ventas = null;
+                    await MODELOS._productos.save(producto);
+                }
+            }else if(Object.keys(updateProducto)[0] == 'estado_pago'){
+
+                updateProducto.estado_pago == 'true'
+                ? updateProducto.estado_pago = true
+                : updateProducto.estado_pago = false;
+                await this._productos
+                .createQueryBuilder()
+                .update(Producto)
+                .set(updateProducto)
+                .where("id = :id", {id: param.id})
+                .execute();
+            }
+            else{
+             
+                await this._productos
+                .createQueryBuilder()
+                .update(Producto)
+                .set(updateProducto)
+                .where("id = :id", {id: param.id})
+                .execute();
+            }
+  
+
+
             /* await this._productos.save(producto); */
     
             return {
                 ok: true,
+    
                 message: 'Producto editado con exito',
                
             }
         } catch (error) {
+            console.log(error)
             return{
                 ok: false,
                 message: 'Error al editar producto',
@@ -87,16 +161,28 @@ export class ProductsController {
 
     //obtener solo el productos y buscador de productos
     @Get('/all')
-    async getProductosPorCodigo(@Query() query:{take: number, skip: number, keyword}): Promise<any>{
+    async getProductosPorCodigo(
+        @Query() 
+        query:{
+            take: number, 
+            skip: number, 
+            keyword,
+            modelo,
+            tela,
+            peso_promedio,
+            taller,
+            dibujo,
+            edad
+        }): Promise<any>{
 
         const take = query.take || 10;
         const skip = query.skip || 0;
         const keyword = query.keyword || '';
     
-        const [result, total] = await this._productos.findAndCount(
+   /*      const [result, total] = await this._productos.findAndCount(
             {
                 where: [{ modelo: Like('%' + keyword + '%') }, {codigo: Like('%' + keyword + '%') }], order: { id: "DESC" },
-                relations: ['taller'],
+                relations: ['taller', 'estampado'],
                 select:{
                     id: true,
                     codigo: true,
@@ -114,6 +200,11 @@ export class ProductsController {
                     fecha_de_salida: true,
                     fecha_de_entrada: true,
                     estado_pago: true,
+                    enviar_distribucion: true,
+                    estampado:{
+                        id: true,
+                        dibujo: true
+                    },
                     taller:{
                         nombre_completo: true,
                     },
@@ -125,18 +216,68 @@ export class ProductsController {
                 skip: skip
             }
         );
+ */
+        const dataQuery = {
+            modelo: query.modelo || null,
+            dibujo: query.dibujo || null,
+            tela: query.tela || null,
+            peso_promedio: query.peso_promedio || null,
+            edad: query.edad || null,
+            taller: query.taller || null,
+        }
 
+        const qb =  await MODELOS._productos.createQueryBuilder("producto")
+        .leftJoinAndSelect("producto.estampado", "estampado")
+        .leftJoinAndSelect("producto.taller", "taller")
+        .where("producto.codigo like :codigo ", { codigo: `%${keyword}%`})
+        .orderBy("producto.id", "DESC")
+        .take(take)
+        .skip(skip)
 
-      /*   const data = await this._productos
-        .createQueryBuilder('producto')
-        .leftJoinAndSelect('producto.taller', 'taller', 'taller.id = producto.id_taller')
-        .select(['producto.codigo','taller.id'])
-        .getMany(); */
+   
+           if(dataQuery.modelo != null && keyword != ''){
+               console.log("modelo")
+
+               qb.orWhere("producto.modelo like :modelo ", { modelo: `%${keyword}%`})
+           }
+           if(dataQuery.tela != null && keyword != ''){
+
+               qb.orWhere("producto.tela like :tela ", { tela: `%${keyword}%`})
+           }
+           if(dataQuery.peso_promedio != null && keyword != ''){
+                   
+               qb.orWhere("producto.peso_promedio like :peso_promedio ", { peso_promedio: `%${keyword}%`})
+           }
+           if(dataQuery.taller != null && keyword != ''){
+               qb.orWhere("taller.nombre_completo like :nombre_completo ", { nombre_completo: `%${keyword}%`})
+
+           }
+           if(dataQuery.dibujo != null && keyword != ''){
+               console.log("dibujo")
+            qb.orWhere("estampado.dibujo like :dibujo ", { dibujo: `%${keyword}%`})
+
+           }
+           if(dataQuery.edad != null && keyword != ''){
+
+               qb.orWhere("producto.edad like :edad ", { edad: `%${keyword}%`})
+
+           }
+       
+
+         
+
+       
+      
+
+       let [data, conteo] = await qb.getManyAndCount();
+
+   
 
         return {
             /* data */
-            data: result,
-            contador: total
+            ok: true,
+            data: data,
+            contador: conteo
         }
     }
 
@@ -157,9 +298,212 @@ export class ProductsController {
         }
     }
 
+
+
+
+    @Get('/distribucion')
+    async getDistribucionProductos(@Query() query:{take: number, skip: number, keyword}): Promise<any>{
+
+        const take = query.take || 10
+        const skip = query.skip || 0
+        const keyword = query.keyword || ''
+    
+        const [producto, total] = await this._productos.findAndCount(
+            {
+                where: [{ modelo: Like('%' + keyword + '%'), enviar_distribucion:true, enviar_ventas:true}, {codigo: Like('%' + keyword + '%'), enviar_distribucion:true, enviar_ventas:true}  ],
+          /*       order: { fecha_de_envio_ventas: "DESC" },  */
+        
+            
+                relations: ['estampado', 'distribucion', 'distribucion.talle','distribucion.local','distribucion.usuario'],
+                
+                select:{
+                    estampado:{ 
+                        dibujo: true,
+                    },
+                    modelo: true,
+                    id: true,
+                    codigo: true,
+                    edad: true,
+                    tela: true,
+                    cantidad_entregada: true,
+                    cantidad_actual: true,
+                    enviar_distribucion: true,
+                    enviar_ventas: true,
+                    fecha_de_envio_ventas: true,
+                    distribucion: {
+                        id: true,
+                        usuario: {
+                            id: true,
+                            nombre: true,
+                            dni_cuil: true,
+                        },
+                        local: {
+                            id: true,
+                            nombre: true,
+                        },
+                        talle:{
+                            id: true,
+                            cantidad:true,
+                            cantidad_actual:true,
+                            talle: true,                           
+                        }
+                    }
+                    
+                },
+              
+                take: take,
+                skip: skip,
+
+            }
+        );
+    
+        return {
+            ok: true,
+            data: producto,
+            contador: total
+        }
+    
+    }
+
+    @Post('/distribucion/:id_distribucion')
+    async postDistribucionProductosVentas(@Request() request: Request, @Param() param: {id_distribucion:number}): Promise<any>{
+
+        try {
+
+            const producto = request.body as unknown as any;
+
+            const productoDistribucion = this._productosVentas.create(producto) as unknown as any;
+
+
+            const dataTalles = await this._distribucion.findOne(
+                {
+                    where:{id: param.id_distribucion},
+                    relations: ['producto', 'talle'],
+
+                }
+                
+                )
+            productoDistribucion.productoDetalles = dataTalles;
+
+            await this._productosVentas.save(productoDistribucion);
+
+
+            dataTalles.talle.map(async (talles) => {
+
+
+                const productoTalles= this._tallesVentas.create({talles:talles.talle, cantidad: talles.cantidad_actual});
+
+                productoTalles.producto_ventas = productoDistribucion;
+
+                await this._tallesVentas.save(productoTalles);
+
+                talles.cantidad_actual = 0;
+
+                await this._distribucionTalles.save(talles);
+
+               //await this._distribucionTalles.update(talles.id,{ cantidad_actual:0})
+                
+
+            })
+
+
+            return {
+                ok: true,
+                msg:"Todo salio bien"
+            }
+
+        } catch (error) {
+            console.log(error)
+            return{
+                ok: false,
+                msg:"Error al guardar producto",
+                error
+            }
+        }
+    }
+
+
+    @Post('/filtros/all')
+    async getFiltros(@Query() query:{take: number, skip: number, keyword}, @Request() request: Request): Promise<any>{
+
+
+        try {
+
+            
+
+            const take = query.take || 10
+            const skip = query.skip || 0
+            const keyword = query.keyword || ''
+
+            
+
+            let bodyData:any = request.body as unknown as [];
+
+            console.log(bodyData)
+
+            const qb =  await MODELOS._productos.createQueryBuilder("producto")
+             .leftJoinAndSelect("producto.estampado", "estampado")
+             .leftJoinAndSelect("producto.taller", "taller")
+             .where("producto.codigo like :codigo ", { codigo: `%${keyword}%`})
+             .orderBy("producto.id", "DESC")
+             .take(take)
+             .skip(skip)
+
+        
+                if(bodyData.data.some(t => t == "modelo") == true){
+                    console.log("modelo")
+    
+                    qb.orWhere("producto.modelo like :modelo ", { modelo: `%${keyword}%`})
+                }
+                if(bodyData.data.some(t => t == "tela") == true){
+    
+                    qb.orWhere("producto.tela like :tela ", { tela: `%${keyword}%`})
+                }
+                if(bodyData.data.some(t => t == "peso_promedio")== true){
+                        
+                    qb.orWhere("producto.peso_promedio like :peso_promedio ", { peso_promedio: `%${keyword}%`})
+                }
+                if(bodyData.data.some(t => t == "taller")== true){
+                    qb.orWhere("taller.nombre_completo like :nombre_completo ", { nombre_completo: `%${keyword}%`})
+    
+                }
+                if(bodyData.data.some(t => t == "dibujo")== true){
+                    console.log("dibujo")
+                 qb.orWhere("estampado.dibujo like :dibujo ", { dibujo: `%${keyword}%`})
+    
+                }
+                if(bodyData.data.some(t => t == "edad")== true){
+    
+                    qb.orWhere("producto.edad like :edad ", { edad: `%${keyword}%`})
+    
+                }
+            
+
+              
+    
+            
+           
+
+            let [data, conteo] = await qb.getManyAndCount();
+
+          
+
+
     
 
-     
+             return{
+                    ok: true,
+                    data:data,
+                    contador: conteo
+             }
+            
+        } catch (error) {
+         console.log(error)   
+        }
+    }
+    
+
+
 
 
 }

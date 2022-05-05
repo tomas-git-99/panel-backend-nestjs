@@ -1,5 +1,5 @@
 import { ExecFileSyncOptionsWithBufferEncoding } from "child_process";
-import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Distribucion } from "./distribucion_producto";
 import { Estampado } from "./estampados";
 import { Taller } from "./taller";
@@ -20,20 +20,20 @@ export class Producto{
     @Column()
     modelo: string;
 
-    @Column()
+    @Column({nullable: true})
     fecha_de_corte:Date;
 
-    @Column()
+    @Column({nullable: true})
     edad:string;
 
-    @Column()
+    @Column({nullable: true})
     tela:string;
 
-    @Column()
+    @Column({nullable: true})
     rollos:number;
 
     @Column({nullable: true})
-    peso_promedio:number;
+    peso_promedio:string;
 
     @Column({nullable: true})
     total_por_talle: number;
@@ -70,6 +70,9 @@ export class Producto{
     enviar_ventas:boolean;
 
     @Column({nullable: true})
+    fecha_de_envio_ventas:Date ;
+
+    @Column({nullable: true})
     cantidad_actual:number;
 
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
@@ -81,8 +84,11 @@ export class Producto{
     //relacions con otras tablas
 
     //estampado
-    @OneToMany(() => Estampado, estampado => estampado.producto)
-    estampado:Estampado[];
+    @OneToOne(() => Estampado, estampado => estampado.producto, {
+        cascade: true,
+    })
+
+    estampado:Estampado;
     
 
     //distribucion producto

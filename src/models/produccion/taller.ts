@@ -9,7 +9,8 @@ export interface EstructuraTaller {
     telefono?:string
 }
 
-@Entity({name:"taller", synchronize: false})
+@Entity()
+//@Entity({name:"taller", synchronize: false})
 export class Taller{
 
     @PrimaryGeneratedColumn()
@@ -23,6 +24,9 @@ export class Taller{
 
     @Column()
     telefono:string;
+
+    @Column({default: true})
+    estado:boolean;
     
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
     created_at: Date;

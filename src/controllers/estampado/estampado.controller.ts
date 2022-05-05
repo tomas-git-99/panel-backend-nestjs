@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Post, Put, Request } from '@nestjs/common';
+import { Controller, Get, Param, Post, Put, Query, Request } from '@nestjs/common';
 import { AppDataSource } from 'src/DBconfig/DataBase';
 import { Estampador } from 'src/models/produccion/estampador';
 import { Estampado } from 'src/models/produccion/estampados';
+import { MODELOS } from 'src/todos_modelos/modelos';
 
 @Controller('estampado')
 export class EstampadoController {
@@ -11,31 +12,51 @@ export class EstampadoController {
 
 
     @Get()
-    async obtenerTodosEstampado(): Promise<any> {
+    async obtenerTodosEstampado(@Query() query:{take: number, skip: number, keyword} ): Promise<any> {
         try {
             
+            const take = query.take || 10
+            const skip = query.skip || 0
+            const keyword = query.keyword || ''
 
-            const [data, contador] = await this._estampado.findAndCount(
-                {
-            
-                    relations: ['producto', 'estampador'],
-                    select:{ 
-                        producto:{
-                            id:true,
-                            modelo:true,
-                        },
-                        estampador:{
-                            nombre:true,
-                        }
 
-                    }
-                }
-            )
+            const qb =  await MODELOS._estampado
+            .createQueryBuilder('estampado')
+            .leftJoinAndSelect("estampado.estampador", "estampador")
+            .leftJoinAndSelect("estampado.producto", "producto")
+         
+            .select([
+          
+                'producto.id',
+                'producto.modelo',
+                'producto.codigo',
+                'producto.tela',
+                'producto.edad',
+     
+                'estampado.id',
+                'estampado.dibujo',
+                'estampado.fecha_de_entrada',
+                'estampado.estado_pago',
+                'estampado.fecha_de_pago',
+
+                'estampador.id',
+                'estampador.nombre',
+        ])
+            .where("producto.codigo like :codigo ", { codigo: `%${keyword}%`})
+  
+
+            .orderBy("producto.id", "DESC")
+            .take(take)
+            .skip(skip)
+
+
+            let [data, conteo] = await qb.getManyAndCount();
+
 
             return {
                 ok: true,
-                data,
-                contador
+                data : data,
+                contador: conteo
             }
 
         } catch (error) {

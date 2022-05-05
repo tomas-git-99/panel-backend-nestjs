@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Estampador } from "./estampador";
 import { Producto } from "./producto";
 
@@ -8,14 +8,6 @@ export class Estampado {
     @PrimaryGeneratedColumn()
     id: number;
 
-  /*   @Column()
-    id_producto:number; */
-
-    @ManyToOne(() => Producto, products => products.estampado)
-    producto:Producto;
-
-/*     @Column({nullable: true})
-    id_estampador:number; */
 
     @Column({nullable: true})
     dibujo:string;
@@ -30,8 +22,17 @@ export class Estampado {
     fecha_de_pago:Date;
 
     //relacion con la tabla estampador
-    @ManyToOne(() => Estampador, estampador => estampador.estampados, { cascade: true})
+    @ManyToOne(() => Estampador, estampador => estampador.estampados, {
+      cascade: true,
+      nullable: true,
+      onDelete: "RESTRICT",
+      onUpdate: "RESTRICT",
+  })
     @JoinColumn({ name: "id_estampador" })
     estampador: Estampador | number ;
+
+    @OneToOne(() => Producto)
+    @JoinColumn()
+    producto:Producto;
 
 }

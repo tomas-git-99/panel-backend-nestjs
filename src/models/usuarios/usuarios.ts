@@ -1,5 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { Distribucion } from "../produccion/distribucion_producto";
+import { Carrito } from "../ventas/carrito";
+import { Locales } from "../ventas/locales";
 
 
 
@@ -8,7 +10,7 @@ export enum RolesDeusuarios{
     PRODUCCION="produccion",
     VENTAS="ventas",
 }
-@Entity()
+@Entity({synchronize:true})
 export class Usuario {
 
     @PrimaryGeneratedColumn()
@@ -17,11 +19,14 @@ export class Usuario {
     @Column()
     nombre: string;
 
-    @Column()
+    @Column({default:null})
     dni_cuil: string;
 
     @Column()
     usuario: string;
+
+    @Column({default:true})
+    estado: boolean;
 
     @Column()
     password: string;
@@ -32,11 +37,20 @@ export class Usuario {
             enum: RolesDeusuarios,
         }
     )
-    rollos: RolesDeusuarios;
+    roles: RolesDeusuarios;
+
+    @ManyToOne( () => Locales, locales => locales.usuarios)
+    local: Locales;
 
     //relaciones de tablas
 
     @OneToMany(() => Distribucion, distribucion => distribucion.usuario)
     distribucion_armado: Distribucion[];
+
+
+    @OneToMany(() => Carrito , carrito => carrito.usuario)
+    carrito: Carrito[];
+
+
 
 }  
