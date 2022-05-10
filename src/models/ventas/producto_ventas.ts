@@ -3,6 +3,7 @@ import { Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, On
 import { Distribucion } from "../produccion/distribucion_producto";
 import { Carrito } from "./carrito";
 import { Categoria } from "./categoria";
+import { Locales } from "./locales";
 import { Nota } from "./nota";
 import { OrdenDetalle } from "./orden_detalle";
 import { TallesVentas } from "./talles_ventas";
@@ -26,6 +27,9 @@ export class ProductoVentas {
     @Column({default: null})
     sub_dibujo: string;
 
+    @ManyToOne(() => Locales , locales => locales.productosVentas)
+    sub_local: string;
+
 
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
     created_at: Date;
@@ -40,7 +44,7 @@ export class ProductoVentas {
     productoDetalles: Distribucion;
 
 
-    @OneToMany(() => TallesVentas, tallesVentas => tallesVentas.producto_ventas)
+    @OneToMany(() => TallesVentas, tallesVentas => tallesVentas.producto_ventas, { cascade: true})
     talles_ventas: TallesVentas[];
 
     

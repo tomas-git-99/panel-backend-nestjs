@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { Distribucion } from "../produccion/distribucion_producto";
 import { Usuario } from "../usuarios/usuarios";
+import { ProductoVentas } from "./producto_ventas";
 
 
 
@@ -31,5 +32,7 @@ export class Locales {
     @OneToMany(() =>Usuario , usuario => usuario.local)
     usuarios: Usuario[];
 
+    @OneToMany(() => ProductoVentas , productosVentas => productosVentas.sub_local)
+    productosVentas: ProductoVentas[];
     
 }

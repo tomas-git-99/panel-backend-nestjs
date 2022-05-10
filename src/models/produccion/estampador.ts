@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Estampado } from "./estampados";
 
 
@@ -16,6 +16,11 @@ export class Estampador {
 
     @Column({nullable: true})
     direccion: string;
+
+  /*   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP()" })
+    createdAt: Date;
+    @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP()", onUpdate: "CURRENT_TIMESTAMP()" })
+    updatedAt: Date; */
 
     //relacion con estampador 
     @OneToMany(() => Estampado, estampado => estampado.estampador)

@@ -230,10 +230,9 @@ export class ProductsController {
         .leftJoinAndSelect("producto.estampado", "estampado")
         .leftJoinAndSelect("producto.taller", "taller")
         .where("producto.codigo like :codigo ", { codigo: `%${keyword}%`})
-        .orderBy("producto.id", "DESC")
+        .orderBy("producto.id", "DESC") 
         .take(take)
         .skip(skip)
-
    
            if(dataQuery.modelo != null && keyword != ''){
                console.log("modelo")

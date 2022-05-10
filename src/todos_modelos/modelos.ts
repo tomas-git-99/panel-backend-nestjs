@@ -2,6 +2,7 @@
 import { AppDataSource } from "src/DBconfig/DataBase";
 import { Distribucion } from "src/models/produccion/distribucion_producto";
 import { DistribucionTalle } from "src/models/produccion/distribucion_talles";
+import { Estampador } from "src/models/produccion/estampador";
 import { Estampado } from "src/models/produccion/estampados";
 import { Fallas } from "src/models/produccion/fallas";
 import { Producto } from 'src/models/produccion/producto';
@@ -42,6 +43,7 @@ export const MODELOS = {
     _distribucion : AppDataSource.getRepository(Distribucion),
     _distribucionTalles : AppDataSource.getRepository(DistribucionTalle),
     _estampado : AppDataSource.getRepository(Estampado),
+    _estampador : AppDataSource.getRepository(Estampador),
     
     _fallas : AppDataSource.getRepository(Fallas),
     _categoria : AppDataSource.getRepository(Categoria),

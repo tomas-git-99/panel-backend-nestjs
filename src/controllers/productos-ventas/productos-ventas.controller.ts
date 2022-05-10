@@ -379,4 +379,49 @@ console.log(error)
         }
     }
 
+
+
+    @Post()
+    async crearProductoSinDistribucion(@Request() request: Request): Promise<any> {
+
+        try {
+            
+
+            const data = request.body as unknown as any;
+
+            
+            
+            const productoVenta:any =  MODELOS._productoVentas.create(data.producto);
+
+
+            data.talles.map( async(x) => {
+
+                
+
+                const productoTalles= MODELOS._tallesVentas.create({talles:x.talles, cantidad: x.cantidad});
+
+                productoTalles.producto_ventas = productoVenta;
+
+                await MODELOS._tallesVentas.save(productoTalles);
+
+        
+            })
+
+            await MODELOS._productoVentas.save(productoVenta);
+
+
+            return{
+                ok: true,
+                message: 'Producto creado',
+            }
+        } catch (error) {
+            
+            return{
+                ok: false,
+                message: error
+            }
+        }
+
+    }
+
 }

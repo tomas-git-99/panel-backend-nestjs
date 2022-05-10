@@ -46,6 +46,7 @@ export const AppDataSource =  new DataSource({
         Estampado, Distribucion, 
         DistribucionTalle, Fallas,
         Estampador, Usuario,
+   
         ProductoVentas, TallesVentas,
         Usuario, Carrito,
         SubProducto, SubTalle,
@@ -55,6 +56,21 @@ export const AppDataSource =  new DataSource({
         Categoria
         
         ],
+
+/*         entities: [
+          Producto, Taller,
+          Estampado, Distribucion, 
+          DistribucionTalle, Fallas,
+          Estampador, Usuario,
+          ProductoVentas, TallesVentas,
+          Usuario, Carrito,
+          SubProducto, SubTalle,
+          Locales, Cliente,
+          ClienteDireccion,Descuento,
+          Nota, Orden, OrdenDetalle, OrdenEstado,
+          Categoria
+          
+          ], */
     subscribers: [],
 
  

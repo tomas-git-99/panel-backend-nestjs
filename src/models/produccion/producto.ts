@@ -8,7 +8,8 @@ import { Taller } from "./taller";
 
 
 
-@Entity()
+//@Entity()
+@Entity({name:"producto", synchronize: true})
 export class Producto{
 
     @PrimaryGeneratedColumn()
@@ -20,7 +21,7 @@ export class Producto{
     @Column()
     modelo: string;
 
-    @Column({nullable: true})
+    @Column({nullable: true, type:'date'})
     fecha_de_corte:Date;
 
     @Column({nullable: true})
@@ -53,34 +54,39 @@ export class Producto{
 
 
 
-    @Column({nullable: true})
+    @Column({nullable: true, type:'date'})
     fecha_de_salida:Date;
-    @Column({nullable: true})
+    @Column({nullable: true, type:'date'})
     fecha_de_entrada:Date;
 
     @Column({default:false, nullable: true})
     estado_pago:boolean;
 
-    @Column({default:false, nullable: true})
-    fecha_de_pago:boolean;
+    @Column({nullable: true, type:'date'})
+    fecha_de_pago:Date;
 
     @Column({default:false, nullable: true})
     enviar_distribucion:boolean;
     @Column({nullable: true, default:false})
     enviar_ventas:boolean;
 
-    @Column({nullable: true})
+    @Column({nullable: true, type:'date'})
     fecha_de_envio_ventas:Date ;
 
     @Column({nullable: true})
     cantidad_actual:number;
 
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
-    created_at: Date;
+    createdAt: Date;
     @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)", onUpdate: "CURRENT_TIMESTAMP(6)" })
-    updated_at: Date;
+    updatedAt: Date;
 
+   /* @Column({default:true})
+   estado:boolean;
+ */
 
+   @Column({nullable: true})
+   precio:number;
     //relacions con otras tablas
 
     //estampado

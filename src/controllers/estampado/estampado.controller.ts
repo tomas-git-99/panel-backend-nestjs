@@ -20,6 +20,8 @@ export class EstampadoController {
             const keyword = query.keyword || ''
 
 
+        
+
             const qb =  await MODELOS._estampado
             .createQueryBuilder('estampado')
             .leftJoinAndSelect("estampado.estampador", "estampador")
@@ -36,7 +38,7 @@ export class EstampadoController {
                 'estampado.id',
                 'estampado.dibujo',
                 'estampado.fecha_de_entrada',
-                'estampado.estado_pago',
+                /* 'estampado.estado_pago', */
                 'estampado.fecha_de_pago',
 
                 'estampador.id',
@@ -176,6 +178,62 @@ export class EstampadoController {
             }
     
     }
+
+    @Get('/estampador')
+    async obtenerTodosEstampador(): Promise<any> {
+
+        try {
+            const estampador = await MODELOS._estampador.find();
+
+            return {
+                ok: true,
+                data:estampador
+            }
+        } catch (error) {
+            
+            return {
+                ok: false,
+                error: error
+            }
+        }
+    }
+    
+
+
+
+    @Get("/prueba/unir")
+    async pruebaUnir(){
+
+
+        /* const estampado = await MODELOS._estampado.find(); */
+        const estampado = await MODELOS._estampado
+        .createQueryBuilder("estampado")
+        .leftJoinAndSelect("estampado.producto", "producto")
+        .select(["estampado.id", "estampado.id_corte", "producto.id", "producto.codigo", "producto.modelo"])
+        .orderBy("producto.codigo * 1", "DESC")
+        .getMany();
+
+    /*     estampado.map(
+            async (x) => {
+
+                const prducto = await MODELOS._productos.findOne({where: {codigo: x.id_corte}});
+
+                x.producto = prducto;
+
+                await MODELOS._estampado.save(x);
+
+            }
+        ) */
+
+
+
+        return{
+           ok: true,
+           estampado
+            
+        }
+    }
+
 
 
 }

@@ -14,13 +14,14 @@ import { LocalController } from './controllers/local/local.controller';
 import { TallerController } from './controllers/taller/taller.controller';
 import { CategoriaController } from './controllers/categoria/categoria.controller';
 import { ProductosVentasController } from './controllers/productos-ventas/productos-ventas.controller';
+import { PagosController } from './controllers/pagos/pagos.controller';
 /* import { TypeOrmModule } from '@nestjs/typeorm';
+import { PagosController } from './pagos/pagos.controller';
  */
-
 
 @Module({
   imports: [
-   /*  TypeOrmModule.forRoot({
+    /*  TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',
       port: 3306,
@@ -31,7 +32,23 @@ import { ProductosVentasController } from './controllers/productos-ventas/produc
       synchronize: true,
     }), */
   ],
-  controllers: [AppController, ProductsController, DistribucionController, EstampadoController, UsuariosController, VentasController, CarritoController, OrdenController, NotaDescuentoController, ClienteController, LocalController, TallerController, CategoriaController, ProductosVentasController],
+  controllers: [
+    AppController,
+    ProductsController,
+    DistribucionController,
+    EstampadoController,
+    UsuariosController,
+    VentasController,
+    CarritoController,
+    OrdenController,
+    NotaDescuentoController,
+    ClienteController,
+    LocalController,
+    TallerController,
+    CategoriaController,
+    ProductosVentasController,
+    PagosController
+  ],
   providers: [AppService],
 })
 export class AppModule {}

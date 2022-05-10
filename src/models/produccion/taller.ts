@@ -27,11 +27,14 @@ export class Taller{
 
     @Column({default: true})
     estado:boolean;
+
+    
     
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
-    created_at: Date;
+    createdAt: Date;
     @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)", onUpdate: "CURRENT_TIMESTAMP(6)" })
-    updated_at: Date;
+    updatedAt: Date;
+
 
 
     @OneToMany(() => Producto , producto => producto.taller)
