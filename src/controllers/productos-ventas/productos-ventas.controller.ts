@@ -192,6 +192,7 @@ export class ProductosVentasController {
             const qb =  await MODELOS._productoVentas
             .createQueryBuilder('producto_ventas')
             .leftJoinAndSelect("producto_ventas.productoDetalles", "productoDetalles")
+            .leftJoinAndSelect("producto_ventas.sub_local", "sub_local")
             .leftJoinAndSelect("producto_ventas.categoria", "categoria")
             .leftJoinAndSelect("productoDetalles.local", "local")
             .leftJoinAndSelect("productoDetalles.producto", "producto")
@@ -204,6 +205,8 @@ export class ProductosVentasController {
                 'producto_ventas.color',
                 'producto_ventas.sub_modelo',
                 'producto_ventas.sub_dibujo',
+                'sub_local.id',
+                'sub_local.nombre',
 
                 'talles_ventas.id',
                 'talles_ventas.cantidad',
@@ -393,21 +396,19 @@ console.log(error)
             
             const productoVenta:any =  MODELOS._productoVentas.create(data.producto);
 
+            await MODELOS._productoVentas.save(productoVenta);
 
             data.talles.map( async(x) => {
 
-                
+                const talles_ventas = MODELOS._tallesVentas.create();
 
-                const productoTalles= MODELOS._tallesVentas.create({talles:x.talles, cantidad: x.cantidad});
+                talles_ventas.talles = x.talles;
+                talles_ventas.cantidad = x.cantidad;
+                talles_ventas.producto_ventas = productoVenta;
 
-                productoTalles.producto_ventas = productoVenta;
-
-                await MODELOS._tallesVentas.save(productoTalles);
-
-        
+                await MODELOS._tallesVentas.save(talles_ventas);
             })
 
-            await MODELOS._productoVentas.save(productoVenta);
 
 
             return{
@@ -415,6 +416,8 @@ console.log(error)
                 message: 'Producto creado',
             }
         } catch (error) {
+
+            console.log(error)
             
             return{
                 ok: false,

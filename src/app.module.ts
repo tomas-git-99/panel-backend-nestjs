@@ -15,9 +15,8 @@ import { TallerController } from './controllers/taller/taller.controller';
 import { CategoriaController } from './controllers/categoria/categoria.controller';
 import { ProductosVentasController } from './controllers/productos-ventas/productos-ventas.controller';
 import { PagosController } from './controllers/pagos/pagos.controller';
-/* import { TypeOrmModule } from '@nestjs/typeorm';
-import { PagosController } from './pagos/pagos.controller';
- */
+import { EstadoOrdenController } from './controllers/estado-orden/estado-orden.controller';
+ 
 
 @Module({
   imports: [
@@ -47,7 +46,8 @@ import { PagosController } from './pagos/pagos.controller';
     TallerController,
     CategoriaController,
     ProductosVentasController,
-    PagosController
+    PagosController,
+    EstadoOrdenController
   ],
   providers: [AppService],
 })

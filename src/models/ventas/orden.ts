@@ -43,7 +43,7 @@ export class Orden {
     @ManyToOne(() => ClienteDireccion, cliente_direccion => cliente_direccion.orden)
     cliente_direccion: ClienteDireccion | number;
 
-    @OneToMany(() => OrdenEstado, ordenEstado => ordenEstado.orden)
+    @OneToOne(() => OrdenEstado, ordenEstado => ordenEstado.orden)
  
     ordenEstado: OrdenEstado;
 
@@ -58,5 +58,8 @@ export class Orden {
     @OneToMany(() => Descuento , descuento => descuento.orden)
     descuento: Descuento[];
 
+
+
+    
 
 }

@@ -134,7 +134,7 @@ export class CarritoController {
         where: { id: param.id_usuario },
         relations: [
           'carrito',
-          'carrito.producto',
+          'carrito.producto', 'carrito.producto.sub_local',
           'carrito.producto.productoDetalles.producto.estampado',
         ],
         select:{
@@ -153,6 +153,10 @@ export class CarritoController {
                     color: true,
                     sub_modelo:true,
                     sub_dibujo: true,
+                    sub_local:{
+                        id:true,
+                        nombre:true,
+                    },
                     productoDetalles:{ 
                         id:true,
                     

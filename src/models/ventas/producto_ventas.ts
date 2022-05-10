@@ -28,7 +28,7 @@ export class ProductoVentas {
     sub_dibujo: string;
 
     @ManyToOne(() => Locales , locales => locales.productosVentas)
-    sub_local: string;
+    sub_local: Locales;
 
 
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })

@@ -7,8 +7,9 @@ import { Like } from 'typeorm';
 
 @Controller('cliente')
 export class ClienteController {
-  @Put('/id_cliente')
-  async crearClienteDireccion(
+
+  @Put('/:id_cliente')
+  async editarCliente(
     @Request() req,
     @Param() param: { id_cliente: number },
   ) {

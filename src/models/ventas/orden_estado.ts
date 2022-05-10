@@ -34,12 +34,12 @@ export class OrdenEstado {
 
     //relacion de tablas
 
-    @OneToOne(() => Locales)
-    @JoinColumn()
+    @ManyToOne(() => Locales, locales => locales.armado)
+    //@JoinColumn()
     armado: Locales;
 
-    @ManyToOne(() => Orden, orden => orden.ordenEstado)
-  
+    @OneToOne(() => Orden)
+    @JoinColumn()
     orden: Orden;
 
 }

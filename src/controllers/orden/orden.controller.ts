@@ -41,6 +41,8 @@ export class OrdenController {
       if (typeof dataBody.cliente.cliente === 'object') {
 
         const cliente:any = await MODELOS._cliente.create(dataBody.cliente.cliente);
+
+        orden.cliente = cliente;
         await MODELOS._cliente.save(cliente);
 
         if(dataBody.cliente.direccion != null ){
@@ -51,7 +53,6 @@ export class OrdenController {
           direccion.cliente = cliente;
           await MODELOS._clienteDireccion.save(direccion);
   
-          orden.cliente = cliente;
           orden.cliente_direccion = direccion;
         }
 
@@ -107,6 +108,11 @@ export class OrdenController {
       const estadoOrden = await MODELOS._ordenEstado.create(
         dataBody.orden_estado,
       );
+
+     if( dataBody.orden_estado.pagado == true ){
+        estadoOrden.pagado = true;
+        estadoOrden.fecha_de_pago = new Date().toISOString().slice(0, 10) as any;
+     }
       estadoOrden.orden = orden;
       await MODELOS._ordenEstado.save(estadoOrden);
 
