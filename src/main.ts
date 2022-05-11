@@ -12,8 +12,8 @@ async function bootstrap() {
   app.enableCors();
   app.setGlobalPrefix('api');
 
-  //await app.listen(9000);
-  await app.listen(9000, '0.0.0.0');
+  await app.listen(9000);
+  //await app.listen(9000, '0.0.0.0');
 }
 
 
