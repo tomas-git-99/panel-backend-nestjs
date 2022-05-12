@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Put, Query, Request } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Put, Query, Request } from '@nestjs/common';
 import { ProductoVentas } from 'src/models/ventas/producto_ventas';
 import { MODELOS } from 'src/todos_modelos/modelos';
 
@@ -135,7 +135,7 @@ export class ProductosVentasController {
 
         try {
 
-            let dataBody = request.body as unknown as {sub_modelo:string, sub_dibujo:string, color:string, precio:number }
+            let dataBody = request.body as unknown as {sub_modelo:string, sub_dibujo:string, color:string, precio:number, sub_local:any }
 
 
             await MODELOS._productoVentas
@@ -425,6 +425,40 @@ console.log(error)
             }
         }
 
+    }
+
+    @Delete('/:id')
+    async eliminarProducto(@Param() param:{ id: number}): Promise<any> {
+
+
+        try {
+            
+
+            const productoVenta = await MODELOS._productoVentas.findOne({where: {id: param.id}, relations: ['talles_ventas']});
+
+
+            productoVenta.talles_ventas.map( async(x) => {
+                    
+                    await MODELOS._tallesVentas.remove(x);
+                }
+            )
+
+            await MODELOS._productoVentas.remove(productoVenta);
+
+
+            return{
+                ok: true,
+                message: 'Producto eliminado',
+            }
+
+        } catch (error) {
+        
+            console.log(error)
+            return{
+                ok: false,
+                message: error
+            }
+        }
     }
 
 }

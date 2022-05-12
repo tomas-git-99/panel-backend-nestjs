@@ -16,6 +16,7 @@ import { CategoriaController } from './controllers/categoria/categoria.controlle
 import { ProductosVentasController } from './controllers/productos-ventas/productos-ventas.controller';
 import { PagosController } from './controllers/pagos/pagos.controller';
 import { EstadoOrdenController } from './controllers/estado-orden/estado-orden.controller';
+import { VentasTallesController } from './controllers/ventas-talles/ventas-talles.controller';
  
 
 @Module({
@@ -47,7 +48,8 @@ import { EstadoOrdenController } from './controllers/estado-orden/estado-orden.c
     CategoriaController,
     ProductosVentasController,
     PagosController,
-    EstadoOrdenController
+    EstadoOrdenController,
+    VentasTallesController
   ],
   providers: [AppService],
 })
