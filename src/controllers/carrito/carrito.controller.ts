@@ -33,6 +33,7 @@ export class CarritoController {
     try {
       const dataBody = request.body as unknown as carritoAgregar;
 
+
       const usuario = await this._usuario.findOne({
         where: { id: param.id_usuario },
         relations: ['carrito.producto'],
@@ -52,11 +53,26 @@ export class CarritoController {
         ],
       });
 
-      productosVentas.talles_ventas.map((talles) => {
-  
+
+dataBody.data.map( e => {
+    productosVentas.talles_ventas.map((talles) => {
+
+        if(e.talle == talles.talles){
+
+            if(talles.cantidad == 0 || talles.cantidad < e.cantidad){
+                productoSinStock.push(
+                    `El talle:${talles.talles} no tiene stock suficiente`,
+                  );
+            }
+        }
+
+    })
+})
+  /*     productosVentas.talles_ventas.map((talles) => {
+       
           if (
-            talles.cantidad <
-            dataBody.data.find((x) => x.talle == talles.talles).cantidad || 
+
+            talles.cantidad < dataBody.data.find((x) => x.talle == talles.talles).cantidad || 
             talles.cantidad == 0
           ) {
             productoSinStock.push(
@@ -64,15 +80,10 @@ export class CarritoController {
             );
           }
 
-   /*        actualizarTalles.push({
-            id: talles.id,
-            talle: talles.talles,
-            cantidad: dataBody.data.find((x) => x.talle == talles.talles).cantidad,
-          }); */
         
 
 
-      });
+      }); */
 
      
 
@@ -85,18 +96,59 @@ export class CarritoController {
       }
 
 
-      dataBody.data.map( 
+      
+      if(usuario.carrito.some( t => t.producto.id == param.id_producto) == true){
+      usuario.carrito
+      .filter( x => x.producto.id == param.id_producto)
+      .map( t => {
+        dataBody.data.map( y => {
+            if (t.talle == y.talle) {
+                t.cantidad +=  parseInt(y.cantidad as any) ;
+                productosVentas.talles_ventas.find( t => t.talles == y.talle).cantidad -= y.cantidad
+
+                this._tallesVentas.save(productosVentas.talles_ventas);
+                this._carrito.save(usuario.carrito);
+            }
+        })
+      })
+    }else{
+        dataBody.data.map( 
+
+
+            async(x) => {
+                productosVentas.talles_ventas.find( t => t.talles == x.talle).cantidad -= x.cantidad
+
+                await this._tallesVentas.save(productosVentas.talles_ventas);
+
+
+                const carrito = await this._carrito.create();
+                carrito.talle = x.talle;
+                carrito.cantidad = x.cantidad;
+                        
+                carrito.producto = productosVentas;
+                carrito.usuario = usuario;
+
+                await this._carrito.save(carrito);
+
+            })
+    }
+
+
+  /*     dataBody.data.map( 
+
+
           async(x) => {
+
             if(usuario.carrito.some( t => t.talle == x.talle && t.producto.id == param.id_producto) == true){
 
-                usuario.carrito.find( x => x.talle == x.talle).cantidad += x.cantidad
+                usuario.carrito.find( x => x.talle == x.talle && x.producto.id == param.id_producto).cantidad += x.cantidad
                 productosVentas.talles_ventas.find( t => t.talles == x.talle).cantidad -= x.cantidad
 
                 this._tallesVentas.save(productosVentas.talles_ventas);
                 this._carrito.save(usuario.carrito);
 
             }else{
-
+                
                 productosVentas.talles_ventas.find( t => t.talles == x.talle).cantidad -= x.cantidad
 
                 await this._tallesVentas.save(productosVentas.talles_ventas);
@@ -113,7 +165,7 @@ export class CarritoController {
             }
     
           }
-      )
+      ) */
 
       return {
         ok: true,

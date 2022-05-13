@@ -1,6 +1,7 @@
 import { Controller, Delete, Get, Param, Post, Put, Query, Request } from '@nestjs/common';
 import { ProductoVentas } from 'src/models/ventas/producto_ventas';
 import { MODELOS } from 'src/todos_modelos/modelos';
+import { Brackets, NotBrackets } from 'typeorm';
 
 @Controller('productos-ventas')
 export class ProductosVentasController {
@@ -234,16 +235,24 @@ export class ProductosVentasController {
             .orderBy("producto_ventas.id", "DESC")
             .take(take)
             .skip(skip)
-   
+
 
             if(keyword != ''){
-                qb.where("producto_ventas.sub_modelo like :sub_modelo ", { sub_modelo: `%${keyword}%`})
-                qb.orWhere(" producto.modelo like :modelo", {  modelo: `%${keyword}%`})
+
+                new Brackets((qb) => {
+                    qb.where("producto_ventas.sub_modelo like :sub_modelo ", { sub_modelo: `%${keyword}%`})
+                    .orWhere(" producto.modelo like :modelo", {  modelo: `%${keyword}%`})
+                })
+
+ /*            qb.where("producto_ventas.sub_modelo like :sub_modelo ", { sub_modelo: `%${keyword}%`})
+
+                qb.orWhere(" producto.modelo like :modelo", {  modelo: `%${keyword}%`}) */
             }
 
           
 
           
+        
            
 
             if(dataQuery.codigo != null && keyword != ''){
@@ -267,10 +276,19 @@ export class ProductosVentasController {
                 
             }
 
+          
             if(local != null){
 
-      
-                qb.andWhere("local.id = :id", { id: local})
+                console.log(local)
+             /*    qb.andWhere("sub_local.id = :id", { id: local})
+                qb.andWhere("local.id = :id", { id: local}) */
+
+              qb.andWhere(
+                new Brackets((qb) => {
+                    qb.where("local.id = :id", { id: local})
+                    .orWhere("sub_local.id = :id", { id: local})
+
+                }))
                 
             }
 
@@ -280,8 +298,6 @@ export class ProductosVentasController {
 
             }
         
-          
-
         
          
            // qb.orWhere("producto.modelo = :modelo", { modelo: `%${keyword}%`})
