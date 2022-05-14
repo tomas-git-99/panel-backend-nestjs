@@ -38,7 +38,7 @@ export class EstampadoController {
                 'estampado.id',
                 'estampado.dibujo',
                 'estampado.fecha_de_entrada',
-                /* 'estampado.estado_pago', */
+                'estampado.pagado',
                 'estampado.fecha_de_pago',
 
                 'estampador.id',

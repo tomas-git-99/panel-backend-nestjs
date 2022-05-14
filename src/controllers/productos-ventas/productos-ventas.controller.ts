@@ -238,11 +238,12 @@ export class ProductosVentasController {
 
 
             if(keyword != ''){
-
+                qb.andWhere(
                 new Brackets((qb) => {
                     qb.where("producto_ventas.sub_modelo like :sub_modelo ", { sub_modelo: `%${keyword}%`})
                     .orWhere(" producto.modelo like :modelo", {  modelo: `%${keyword}%`})
                 })
+                )
 
  /*            qb.where("producto_ventas.sub_modelo like :sub_modelo ", { sub_modelo: `%${keyword}%`})
 
@@ -256,6 +257,8 @@ export class ProductosVentasController {
            
 
             if(dataQuery.codigo != null && keyword != ''){
+
+                
         
                 qb.orWhere("producto.codigo like :codigo ", { codigo: `%${keyword}%`})
                 qb.orWhere("producto_ventas.id like :id ", { id: `%${keyword}%`})

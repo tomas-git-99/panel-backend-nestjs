@@ -24,6 +24,9 @@ export class Estampado {
     @Column({nullable: true,  type:'date'})
     fecha_de_pago:Date;
 
+    @Column({nullable: true})
+    precio: number;
+
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
     createdAt: Date;
     @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)", onUpdate: "CURRENT_TIMESTAMP(6)" })

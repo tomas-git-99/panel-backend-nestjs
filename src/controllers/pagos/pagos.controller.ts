@@ -129,4 +129,126 @@ export class PagosController {
     }
 
 
+    
+    @Get('/estampadores')
+    async getEstampador(
+        @Query() query:{ estampador: number, de: Date, hasta: Date}
+    ) {
+
+        try {
+
+            const [estampados, conteo] = await MODELOS._estampado.findAndCount({
+                where: {
+                    estampador:{
+                        id: query.estampador,
+                    },
+                    fecha_de_entrada: Between(query.de, query.hasta),
+                    pagado: false,
+                }, 
+              relations: ['producto'],
+                select:{
+                    id: true,
+                    dibujo: true,
+                    fecha_de_entrada: true,
+                    estampador:{
+                        id: true,
+                        nombre: true,
+                    },
+                    producto:{
+                        id: true,
+                        codigo: true,
+                        modelo: true,
+                        total: true,
+                        total_por_talle: true,
+                        talles: true,
+                    }
+                }
+            })
+
+            return {
+                ok: true,
+                contador: conteo,
+                data: estampados
+            };
+
+            
+        } catch (error) {
+            
+            return{
+                ok: false,
+                data: error
+
+            }
+        }
+    }
+
+
+    @Put('/estampadores/pago')
+    async getEstampadorPagar(
+        @Query() query:{ estampador: number, de: Date, hasta: Date},
+        @Request() request: Request
+    ) {
+
+        try {
+            
+            const dataBody = request.body as unknown as [{ id:number, precio: number, total:number}]
+
+            console.log(dataBody)
+
+         
+            const estampador = await MODELOS._estampador.findOne({
+                where: {
+                    id: query.estampador,
+                    estampados:{
+                        fecha_de_entrada: Between(query.de, query.hasta),
+                        pagado: false,
+                    }
+                }
+                ,
+                relations: ['estampados.producto'],
+                select:{
+                    id: true,
+                    nombre: true,
+                    estampados:{
+                        id: true,
+                        dibujo: true,
+                        fecha_de_entrada: true,
+                        pagado: true,
+                        producto:{
+                            id: true,
+                            codigo: true,
+                            modelo: true,
+                        }
+                    }
+                }
+            })
+    
+    
+            //cambiar el estado por pagado y fecha correspondiente
+    
+            estampador.estampados.map( async(x) => {
+    
+                x.pagado = true;
+                x.fecha_de_pago = new Date().toISOString().slice(0, 10) as any;
+                x.precio = dataBody.find(  p => p.id == x.id).precio;
+                await MODELOS._estampado.save(x);
+    
+            })
+    
+    
+            return {
+                ok: true,
+                data: estampador
+            }
+            
+        } catch (error) {
+            
+            return{
+                ok: false,
+                data: error
+            }
+        }
+
+    }
+
 }

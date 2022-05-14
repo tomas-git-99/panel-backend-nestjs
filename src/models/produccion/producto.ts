@@ -2,6 +2,7 @@ import { ExecFileSyncOptionsWithBufferEncoding } from "child_process";
 import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Distribucion } from "./distribucion_producto";
 import { Estampado } from "./estampados";
+import { HistorialPagosTaller } from "./historial-pagos-taller";
 import { Taller } from "./taller";
 
 
@@ -108,4 +109,8 @@ export class Producto{
    /*  @ManyToMany(() => Distribucion)
     @JoinTable()
     distribucion:Distribucion[]; */
+
+  /*   @ManyToMany(() => HistorialPagosTaller, historialPagosTaller => historialPagosTaller.productos)
+    @JoinTable()
+    historialPagosTaller:HistorialPagosTaller[]; */
 }
