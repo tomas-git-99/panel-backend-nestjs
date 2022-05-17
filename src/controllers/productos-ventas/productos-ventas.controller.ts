@@ -242,6 +242,7 @@ export class ProductosVentasController {
                 new Brackets((qb) => {
                     qb.where("producto_ventas.sub_modelo like :sub_modelo ", { sub_modelo: `%${keyword}%`})
                     .orWhere(" producto.modelo like :modelo", {  modelo: `%${keyword}%`})
+                   
                 })
                 )
 
@@ -279,29 +280,36 @@ export class ProductosVentasController {
                 
             }
 
+            if(categoria != null){
+
+              /*   qb.andWhere(
+                    new Brackets((qb) => {
+                        qb.where("categoria.id = :id", { id: categoria })
+                    })) */
+                
+                qb.andWhere("categoria.id like :id", { id: categoria})
+
+            }
+
           
             if(local != null){
 
-                console.log(local)
-             /*    qb.andWhere("sub_local.id = :id", { id: local})
-                qb.andWhere("local.id = :id", { id: local}) */
-
+             
               qb.andWhere(
                 new Brackets((qb) => {
                     qb.where("local.id = :id", { id: local})
                     .orWhere("sub_local.id = :id", { id: local})
-
+                   /*  if(categoria != null){
+                        qb.andWhere("categoria.id like :id", { id: categoria})
+                    } */
                 }))
                 
             }
 
-            if(categoria != null){
-                
-                qb.andWhere("categoria.id = :id", { id: categoria})
-
-            }
+           
         
         
+          
          
            // qb.orWhere("producto.modelo = :modelo", { modelo: `%${keyword}%`})
 

@@ -321,44 +321,27 @@ dataBody.data.map( e => {
 
     const dataBody = request.body as unknown as {precio_nuevo:number};
 
-            const carrito = await this._usuario.find({
-                where: [{ id: param.id_usuario }, { carrito:{ producto:{ id: param.id_producto} } }],
-                relations: ['carrito.producto'],
-                select:{ 
-                    id:true,
-                    nombre:true,
-                    usuario:true,
-                    roles:true,
-                    carrito:{
-                        id:true,
-                        talle:true,
-                        cantidad:true,
-                        precio_nuevo:true,
-                        producto:{ 
-                            id:true,
-                            precio:true,
-                            color: true,
-                            sub_modelo:true,
-                            sub_dibujo: true,
-                     
-                        },
         
-                    }
-                }
+
+            const usarioCarrito = await MODELOS._usuario.findOne({
+                where: {id: param.id_usuario},
+                relations: ['carrito.producto']
             });
 
-            carrito[0].carrito.map( 
-                x => {
+            usarioCarrito.carrito.map( async (x) => {
+            
+                if(x.producto.id == param.id_producto){
                     x.precio_nuevo = dataBody.precio_nuevo;
-                    this._carrito.save(x);
-                    
+                    await MODELOS._carrito.save(x);
+                }
             })
 
+        
 
             
 
             return {
-                carrito: carrito,
+                ok: true
             }
             
         } catch (error) {

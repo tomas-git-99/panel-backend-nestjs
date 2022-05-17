@@ -38,6 +38,7 @@ export class OrdenController {
       });
 
       const orden = await MODELOS._orden.create();
+      orden.local_orden = carrito.local;
       
 
       if (typeof dataBody.cliente.cliente === 'object') {
@@ -63,7 +64,6 @@ export class OrdenController {
         orden.cliente_direccion = dataBody.cliente.direccion;
       }
 
-      orden.local_orden = carrito.local;
       await MODELOS._orden.save(orden);
 
       //const orden = await MODELOS._orden.find({relations:['cliente','cliente_direccion']});
@@ -76,8 +76,7 @@ export class OrdenController {
         ordenDetalle.cantidad = x.cantidad;
         ordenDetalle.talle = x.talle;
         ordenDetalle.productoVentas = x.producto;
-        ordenDetalle.precio =
-          x.precio_nuevo == null ? x.producto.precio : x.precio_nuevo;
+        ordenDetalle.precio = (x.precio_nuevo == null ? x.producto.precio : x.precio_nuevo);
         await MODELOS._ordenDetalle.save(ordenDetalle);
         await MODELOS._carrito.remove(x);
       });
