@@ -32,7 +32,8 @@ export class NotaDescuentoController {
 
             return {
                 ok: true,
-                message: 'Nota agregada correctamente'
+                message: 'Nota agregada correctamente',
+                data: notas
             }
 
 
@@ -51,7 +52,7 @@ export class NotaDescuentoController {
     //eliminar nota 
 
     @Delete('/nota/:id_nota')
-    async eliminarNota(@Param('id_nota') param: {id_nota:number}): Promise<any>{
+    async eliminarNota(@Param() param: {id_nota:number}): Promise<any>{
             
             try {
     
@@ -107,7 +108,8 @@ export class NotaDescuentoController {
 
                 return {
                     ok: true,
-                    message: 'Descuento agregado correctamente'
+                    message: 'Descuento agregado correctamente',
+                    data: descuentos
                 }
 
             } catch (error) {
@@ -125,9 +127,11 @@ export class NotaDescuentoController {
     //eliminar descuento
 
     @Delete('/descuento/:id_descuento')
-    async eliminarDescuento(@Param('id_descuento') param: {id_descuento:number}): Promise<any>{
+    async eliminarDescuento(@Param() param: {id_descuento:number}): Promise<any>{
                     
                     try {
+
+                        console.log(param.id_descuento);
             
                         const descuento = await MODELOS._descuento.findOne({
                             where: {

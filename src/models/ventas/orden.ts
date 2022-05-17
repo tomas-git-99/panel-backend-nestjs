@@ -1,8 +1,10 @@
 
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Usuario } from "../usuarios/usuarios";
 import { Cliente } from "./cliente";
 import { ClienteDireccion } from "./clienteDireccion";
 import { Descuento } from "./descuento";
+import { Locales } from "./locales";
 import { Nota } from "./nota";
 import { OrdenDetalle } from "./orden_detalle";
 import { OrdenEstado } from "./orden_estado";
@@ -23,11 +25,14 @@ export class Orden {
 /*     @Column()
     fecha_de_creacion:Date; */
 
+    @ManyToOne(() => Locales, locales => locales.ordenes)
+    local_orden: Locales;
 
-    @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
+
+    @CreateDateColumn({ type: "timestamp"})
     created_at: Date;
 
-    @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)", onUpdate: "CURRENT_TIMESTAMP(6)" })
+    @UpdateDateColumn({ type: "timestamp"})
     updated_at: Date;
 
 

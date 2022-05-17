@@ -48,9 +48,12 @@ export class EstampadoController {
   
 
             .orderBy("producto.id", "DESC")
-            .take(take)
+            .orderBy("producto.codigo * 1", "DESC")
+            .limit(take)
+            .offset(skip)
+         /*    .take(take)
             .skip(skip)
-
+ */
 
             let [data, conteo] = await qb.getManyAndCount();
 

@@ -59,7 +59,7 @@ export interface Front_Orden_NOTA_DESCUENTO{
     orden_estado:{
         metodo_de_pago:string;
         factura:string;
-        pagado:boolean;
+        pagado:any;
         fecha_de_pago:Date;
         transporte:string;
         fecha_de_envio:Date;

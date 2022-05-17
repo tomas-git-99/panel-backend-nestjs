@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryCo
 import { Distribucion } from "../produccion/distribucion_producto";
 import { Carrito } from "../ventas/carrito";
 import { Locales } from "../ventas/locales";
+import { Orden } from "../ventas/orden";
 
 
 
@@ -50,6 +51,10 @@ export class Usuario {
 
     @OneToMany(() => Carrito , carrito => carrito.usuario)
     carrito: Carrito[];
+
+
+    @OneToMany(() => Orden, orden => orden.local_orden)
+    orden: Orden[];
 
 
 

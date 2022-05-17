@@ -8,6 +8,7 @@ import {
   Query,
   Request,
 } from '@nestjs/common';
+
 import { crearClienteDireccion } from 'src/helpers/crearCliente';
 import { defaultNULL } from 'src/helpers/nullDefault';
 import {
@@ -16,17 +17,17 @@ import {
 } from 'src/interface/interfaceGB';
 
 import { MODELOS } from 'src/todos_modelos/modelos';
-import { Like } from 'typeorm';
+import { Brackets, Like } from 'typeorm';
 
 @Controller('orden')
 export class OrdenController {
   @Post('/:id_usuario')
   async generarOrden(
-    @Param() param: { id_usuario: number },
+    @Param() param: { id_usuario: any },
     @Request() request: Request,
   ): Promise<any> {
     try {
-      console.log('el mas perron')
+      console.log('el mas perron');
       let dataBody = request.body as unknown as Front_Orden_NOTA_DESCUENTO;
 
       const carrito = await MODELOS._usuario.findOne({
@@ -37,34 +38,32 @@ export class OrdenController {
       });
 
       const orden = await MODELOS._orden.create();
+      
 
       if (typeof dataBody.cliente.cliente === 'object') {
-
-        const cliente:any = await MODELOS._cliente.create(dataBody.cliente.cliente);
+        const cliente: any = await MODELOS._cliente.create(
+          dataBody.cliente.cliente,
+        );
 
         orden.cliente = cliente;
         await MODELOS._cliente.save(cliente);
 
-        if(dataBody.cliente.direccion != null ){
+        if (dataBody.cliente.direccion != null) {
           const direccion: any = await MODELOS._clienteDireccion.create(
             dataBody.cliente.direccion,
           );
-  
+
           direccion.cliente = cliente;
           await MODELOS._clienteDireccion.save(direccion);
-  
+
           orden.cliente_direccion = direccion;
         }
-
-     
-
       } else if (typeof dataBody.cliente.cliente === 'number') {
-
         orden.cliente = dataBody.cliente.cliente;
         orden.cliente_direccion = dataBody.cliente.direccion;
-
       }
 
+      orden.local_orden = carrito.local;
       await MODELOS._orden.save(orden);
 
       //const orden = await MODELOS._orden.find({relations:['cliente','cliente_direccion']});
@@ -109,10 +108,12 @@ export class OrdenController {
         dataBody.orden_estado,
       );
 
-     if( dataBody.orden_estado.pagado == true ){
+      if (dataBody.orden_estado.pagado == 'true') {
         estadoOrden.pagado = true;
-        estadoOrden.fecha_de_pago = new Date().toISOString().slice(0, 10) as any;
-     }
+        estadoOrden.fecha_de_pago = new Date()
+          .toISOString()
+          .slice(0, 10) as any;
+      }
       estadoOrden.orden = orden;
       await MODELOS._ordenEstado.save(estadoOrden);
 
@@ -121,7 +122,6 @@ export class OrdenController {
         data: orden,
       };
     } catch (error) {
-
       return {
         ok: false,
         error: error,
@@ -137,7 +137,7 @@ export class OrdenController {
           id: param.id_orden,
         },
         relations: [
-          'orden_detalle.producto',
+          'orden_detalle.productoVentas.talles_ventas',
           'ordenEstado',
           'nota',
           'descuento',
@@ -145,18 +145,17 @@ export class OrdenController {
       });
 
       orden.orden_detalle.map(async (x) => {
-        let producto = await MODELOS._productoVentas.findOne({
-          where: {
-            id: x.productoVentas.id,
-          },
-          relations: ['talles_ventas'],
+      
+        x.productoVentas.talles_ventas.map(async (t) => {
+          if (t.talles == x.talle) {
+            t.cantidad += x.cantidad;
+            await MODELOS._tallesVentas.save(t);
+            //await MODELOS._ordenDetalle.remove(x);
+          }
         });
 
-        producto.talles_ventas.find((t) => t.talles == x.talle).cantidad +=
-          x.cantidad;
-
-        await MODELOS._tallesVentas.save(producto.talles_ventas);
-        await MODELOS._ordenDetalle.remove(x);
+        /*     await MODELOS._tallesVentas.save(x.productoVentas.talles_ventas);
+        await MODELOS._ordenDetalle.remove(x); */
       });
 
       orden.nota.length > 0
@@ -184,22 +183,23 @@ export class OrdenController {
 
   @Delete('/todos/:id_orden/:id_producto')
   async eliminarProductoID(
-    @Param() param: { id_producto: number; id_orden: number },
+    @Param() param: { id_producto: any; id_orden: number },
   ): Promise<any> {
     try {
       const orden = await MODELOS._orden.findOne({
         where: {
           id: param.id_orden,
         },
-        relations: ['orden_detalle.producto.talles_ventas'],
+        relations: ['orden_detalle.productoVentas.talles_ventas', 'nota'],
       });
       orden.orden_detalle
         .filter((x) => x.productoVentas.id == param.id_producto)
         .map(async (t) => {
           /* if( t.producto.talles_ventas.some( m => m.talles == t.talle) ){ */
 
-          t.productoVentas.talles_ventas.find((p) => p.talles == t.talle).cantidad +=
-            t.cantidad;
+          t.productoVentas.talles_ventas.find(
+            (p) => p.talles == t.talle,
+          ).cantidad += t.cantidad;
 
           await MODELOS._tallesVentas.save(t.productoVentas.talles_ventas);
           await MODELOS._ordenDetalle.remove(t);
@@ -207,11 +207,20 @@ export class OrdenController {
           /*  } */
         });
 
+      if (orden.nota != null) {
+        if (orden.nota.some((x) => x.producto_ventas == param.id_producto)) {
+          await MODELOS._nota.remove(
+            orden.nota.find((x) => x.producto_ventas == param.id_producto),
+          );
+        }
+      }
+
       return {
         ok: true,
         message: 'Producto eliminado',
       };
     } catch (error) {
+      console.log(error);
       return {
         ok: false,
         error: error,
@@ -247,7 +256,6 @@ export class OrdenController {
   @Get('/:id_orden')
   async getOrden(@Param() param: { id_orden: number }): Promise<any> {
     try {
-      
       const orden = await MODELOS._orden.findOne({
         where: {
           id: param.id_orden,
@@ -280,15 +288,14 @@ export class OrdenController {
 
   @Get()
   async obtenerOrdenes(
-    @Param() param: { id_orden: number },
     @Query()
     query: {
       take: number;
       skip: number;
       keyword;
       local: number;
-      fechaInicio:Date;
-      fechaFinal:Date;
+      fechaInicio: Date;
+      fechaFinal: Date;
     },
   ): Promise<any> {
     try {
@@ -300,23 +307,27 @@ export class OrdenController {
 
       const local = query.local || null;
 
-      /*    const dataQuery = {
-                modelo: query.modelo || null,
-                dibujo: query.dibujo || null,
-                color: query.color || null,
-            } */
 
-      /*  relations: [
-          'orden_detalle.producto.productoDetalles.producto.estampado',
-          'nota.producto_ventas.productoDetalles.producto','descuento',
-          'ordenEstado.armado', 'cliente', 'cliente_direccion'],
-       */
+      const start = new Date(fechaInicio);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(fechaFinal);
+      end.setDate(end.getDate() + 1);
+
+  
+
+     
+
 
       const qb = await MODELOS._orden
         .createQueryBuilder('orden')
         .leftJoinAndSelect('orden.orden_detalle', 'orden_detalle')
+        .leftJoinAndSelect('orden.local_orden', 'local_orden')
+        
         .leftJoinAndSelect('orden_detalle.productoVentas', 'productoVentas')
-        .leftJoinAndSelect('productoVentas.productoDetalles', 'productoDetalles')
+        .leftJoinAndSelect(
+          'productoVentas.productoDetalles',
+          'productoDetalles',
+        )
         .leftJoinAndSelect('productoDetalles.producto', 'producto')
         .leftJoinAndSelect('producto.estampado', 'estampado')
         .leftJoinAndSelect('orden.nota', 'nota')
@@ -328,10 +339,14 @@ export class OrdenController {
         .leftJoinAndSelect('orden.cliente', 'cliente')
         .leftJoinAndSelect('orden.cliente_direccion', 'cliente_direccion')
         .select([
-          'orden.id', 
-          'orden.estado', 
+          'orden.id',
+          'orden.estado',
           'orden.created_at',
           'orden.updated_at',
+
+          'local_orden.id',
+          'local_orden.nombre',
+       
 
           'orden_detalle.id',
           'orden_detalle.cantidad',
@@ -371,69 +386,48 @@ export class OrdenController {
           'ordenEstado.transporte',
           'ordenEstado.fecha_de_envio',
           'ordenEstado.pagado',
-          
-        'armado.id',
-        'armado.nombre',
 
-        'cliente.id',
-        'cliente.nombre',
-        'cliente.apellido',
-        'cliente.dni_cuil',
-        'cliente.telefono',
-        'cliente.email',
+          'armado.id',
+          'armado.nombre',
 
+          'cliente.id',
+          'cliente.nombre',
+          'cliente.apellido',
+          'cliente.dni_cuil',
+          'cliente.telefono',
+          'cliente.email',
 
-'cliente_direccion.id',
-'cliente_direccion.direccion',
-'cliente_direccion.cp',
-'cliente_direccion.localidad',
-'cliente_direccion.provincia',
-        
+          'cliente_direccion.id',
+          'cliente_direccion.direccion',
+          'cliente_direccion.cp',
+          'cliente_direccion.localidad',
+          'cliente_direccion.provincia',
         ])
-        .where('orden.id like :id ', { id: `%${keyword}%` })
-        .orderBy('orden.id', 'DESC')
+         //.where('orden.id like :id ', { id: `%${keyword}%` })
+         .orderBy('orden.id', 'DESC')
         .take(take)
         .skip(skip);
-
-      /*      if(dataQuery.modelo != null && keyword != ''){
         
-                qb.orWhere("producto.modelo like :modelo ", { modelo: `%${keyword}%`})
-                qb.orWhere("productoVentas.sub_modelo like :sub_modelo ", { sub_modelo: `%${keyword}%`})
+        if(keyword != ''){
+     
+          qb.orWhere('orden.id like :id ', { id: `%${keyword}%` })
+        }
+      if (fechaInicio != null && fechaFinal != null) {
+     
+        qb.andWhere(`orden.created_at BETWEEN '${start.toISOString()}' AND '${end.toISOString()}'`);
 
-            }
-
-            if(dataQuery.dibujo != null && keyword != ''){
-
-                qb.orWhere("estampado.dibujo like :dibujo ", { dibujo: `%${keyword}%`})
-                qb.orWhere("productoVentas.sub_dibujo like :sub_dibujo ", { sub_dibujo: `%${keyword}%`})
-                
-            }
-
-            if(dataQuery.color != null && keyword != ''){
-            
-                qb.orWhere("productoVentas.color like :color ", { color: `%${keyword}%`})
-                
-            }
-          
- */
-      /* qb.andWhere('producto.enviar_distribucion = :enviar_distribucion', {
-        enviar_distribucion: true,
-      });
-      qb.andWhere('producto.enviar_ventas = :enviar_ventas', {
-        enviar_ventas: true,
-      });
-      qb.andWhere('distribucion.estado_envio = :estado_envio', {
-        estado_envio: true,
-      }); */
-
-
-      if (fechaInicio && fechaFinal && keyword != ''){
-      qb.andWhere(`"orden.created_at" BETWEEN :begin AND :end`,{ begin: fechaInicio, end: fechaFinal})
+  
       }
 
-      if(local != null){
-        qb.andWhere("local.id = :id", { id: local})
+
+      if (local != null ) {
+        console.log(local);
+        qb.andWhere('local_orden.id = :id', { id: local });
+       
       }
+
+      
+
 
       let [data, conteo] = await qb.getManyAndCount();
 
@@ -476,13 +470,13 @@ export class OrdenController {
                 }
             ); */
 
-     /*  return {
+      /*  return {
         ok: true,
         data: orden,
         contador: total,
       }; */
     } catch (error) {
-        console.log(error)
+      console.log(error);
       return {
         ok: false,
         error: error,
@@ -490,13 +484,18 @@ export class OrdenController {
     }
   }
 
-  @Post('completo/:id_orden/:id_producto')
+  @Post('completo/:id_orden')
   async agregarOrden(
-    @Param() param: { id_orden: number; id_producto: number },
+    @Param() param: { id_orden: number },
     @Request() request: Request,
   ): Promise<any> {
     try {
-      const dataBody = request.body as unknown as carritoAgregar;
+      const dataBody = request.body as unknown as {
+        id_producto: number;
+        precio_nuevo: number;
+        talles: [{ talle: number; cantidad: number }];
+      };
+
       let actualizarTalles: any[] = [];
 
       const productoSinStock: string[] = [];
@@ -508,7 +507,7 @@ export class OrdenController {
         /*  relations:['orden_detalle.producto','orden_estado','nota','descuento'] */
       });
       const productosVentas = await MODELOS._productoVentas.findOne({
-        where: { id: param.id_producto },
+        where: { id: dataBody.id_producto },
         relations: [
           'productoDetalles',
           'productoDetalles.producto',
@@ -518,22 +517,26 @@ export class OrdenController {
       });
 
       productosVentas.talles_ventas.map((talles) => {
-        if (dataBody.data.some((x) => x.talle == talles.talles) == true) {
+        if (dataBody.talles.some((x) => x.talle == talles.talles) == true) {
           if (
             talles.cantidad <
-            dataBody.data.find((x) => x.talle == talles.talles).cantidad
+            dataBody.talles.find((x) => x.talle == talles.talles).cantidad
           ) {
             productoSinStock.push(
-              `El talle:${talles.talles} no tiene stock suficiente Info: `,
+              `El talle:${talles.talles} no tiene stock suficiente, Info: ${
+                productosVentas.productoDetalles.producto.codigo == null
+                  ? productosVentas.id
+                  : productosVentas.productoDetalles.producto.codigo
+              }`,
             );
           }
-
+          /* 
           actualizarTalles.push({
             id: talles.id,
             talle: talles.talles,
-            cantidad: dataBody.data.find((x) => x.talle == talles.talles)
+            cantidad: dataBody.talles.find((x) => x.talle == talles.talles)
               .cantidad,
-          });
+          }); */
         }
       });
 
@@ -544,30 +547,30 @@ export class OrdenController {
           productoSinStock,
         };
       }
+      productosVentas.talles_ventas.map(async (x) => {
+        if (dataBody.talles.some((t) => t.talle == x.talles)) {
+          let body = dataBody.talles.find((v) => v.talle == x.talles);
+          x.cantidad -= body.cantidad;
 
-      dataBody.data.map(async (x) => {
-        if (orden.orden_detalle.some((t) => t.talle == x.talle)) {
-          orden.orden_detalle.find((t) => t.talle == x.talle).cantidad +=
-            x.cantidad;
-          productosVentas.talles_ventas.find(
-            (t) => t.talles == x.talle,
-          ).cantidad -= x.cantidad;
-          await MODELOS._tallesVentas.save(productosVentas.talles_ventas);
-        } else {
-          productosVentas.talles_ventas.find(
-            (t) => t.talles == x.talle,
-          ).cantidad -= x.cantidad;
-
-          await MODELOS._tallesVentas.save(productosVentas.talles_ventas);
           const ordenDetalle = await MODELOS._ordenDetalle.create();
-          ordenDetalle.cantidad = x.cantidad;
-          ordenDetalle.talle = x.talle;
+          ordenDetalle.cantidad = body.cantidad;
+          ordenDetalle.talle = body.talle;
           ordenDetalle.productoVentas = productosVentas;
+          ordenDetalle.precio =
+            dataBody.precio_nuevo == 0
+              ? productosVentas.precio
+              : dataBody.precio_nuevo;
           ordenDetalle.orden = orden;
 
           await MODELOS._ordenDetalle.save(ordenDetalle);
+          await MODELOS._tallesVentas.save(x);
         }
       });
+
+      return {
+        ok: true,
+        message: 'Orden agregada',
+      };
     } catch (error) {
       return {
         ok: false,
@@ -614,7 +617,9 @@ export class OrdenController {
         };
       }
 
-      await MODELOS._tallesVentas.save(ordenDetalle.productoVentas.talles_ventas);
+      await MODELOS._tallesVentas.save(
+        ordenDetalle.productoVentas.talles_ventas,
+      );
 
       /*   ordenDetalle.producto.talles_ventas.map(async (talles) => {
                 if (talles.talles == ordenDetalle.talle) {

@@ -232,6 +232,8 @@ export class ProductsController {
         .where("producto.codigo like :codigo ", { codigo: `%${keyword}%`})
         //.orderBy("producto.id", "DESC") 
         .orderBy("producto.codigo * 1", "DESC") 
+        .limit(take)
+        .offset(skip)
         
      /*    .take(take)
         .skip(skip)  */
