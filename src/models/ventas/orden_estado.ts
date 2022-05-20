@@ -16,7 +16,7 @@ export class OrdenEstado {
     @Column()
     metodo_de_pago: string;
 
-    @Column({default:false})
+    @Column({default:null})
     factura:string;
 
     @Column({default:false})

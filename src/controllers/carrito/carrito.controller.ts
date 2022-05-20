@@ -353,54 +353,26 @@ dataBody.data.map( e => {
     }
 
     @Delete('/:id_usuario/:id_producto')
-    async eliminarCarrito(@Param() param: { id_usuario: number, id_producto: number}): Promise<any> {
+    async eliminarCarritoTodo(@Param() param: { id_usuario: number, id_producto: number}): Promise<any> {
         try {
-            const carrito = await this._usuario.find({
-                where: [{ id: param.id_usuario }, { carrito:{ producto:{ id: param.id_producto} } }],
-                relations: ['carrito.producto.talles_ventas'],
-                select:{ 
-                    id:true,
-                    nombre:true,
-                    usuario:true,
-                    roles:true,
-                    carrito:{
-                        id:true,
-                        talle:true,
-                        cantidad:true,
-                        precio_nuevo:true,
-                        producto:{ 
-                            id:true,
-                            precio:true,
-                            color: true,
-                            sub_modelo:true,
-                            sub_dibujo: true,
-                            talles_ventas:{
-                                id:true,
-                                talles:true,
-                                cantidad:true,
-                            }
-                        },
-        
-                    }
+           console.log('hola')
+            const usuario = await MODELOS._usuario.findOne(
+                {
+                    where: { id: param.id_usuario },
+                    relations: ['carrito.producto.talles_ventas'],
                 }
-            });
-            
+            )
 
-            carrito[0].carrito.map( async (x) => {
 
-                await this._carrito.remove(x);
-                x.producto.talles_ventas.map( 
-                    (talles) => {
-                        if(talles.talles == x.talle){
-                            talles.cantidad += x.cantidad
-                            this._tallesVentas.save(talles);
-                        }
-                    }
-                )
-        
-
+            usuario.carrito.map( async(x) => {
+                if(x.producto.id == param.id_producto){
+                    x.producto.talles_ventas.find( y => y.talles == x.talle).cantidad += x.cantidad;
+                    await MODELOS._tallesVentas.save(x.producto.talles_ventas);
+                    await MODELOS._carrito.remove(x);
+                }
             })
 
+          
 
             return {
                 ok: true,

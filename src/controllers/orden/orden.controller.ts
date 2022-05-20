@@ -37,6 +37,14 @@ export class OrdenController {
         relations: ['carrito.producto.talles_ventas'],
       });
 
+      if(carrito.carrito.length <= 0 ){
+        return {
+          ok: false,
+          message: 'No hay productos en el carrito',
+        }
+      }
+
+
       const orden = await MODELOS._orden.create();
       orden.local_orden = carrito.local;
       
