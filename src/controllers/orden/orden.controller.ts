@@ -74,6 +74,19 @@ export class OrdenController {
 
       await MODELOS._orden.save(orden);
 
+      const estadoOrden = await MODELOS._ordenEstado.create(
+        dataBody.orden_estado,
+      );
+
+      if (dataBody.orden_estado.pagado == 'true' || dataBody.orden_estado.pagado == true) {
+        estadoOrden.pagado = true;
+        estadoOrden.fecha_de_pago = new Date()
+          .toISOString()
+          .slice(0, 10) as any;
+      }
+      estadoOrden.orden = orden;
+      await MODELOS._ordenEstado.save(estadoOrden);
+
       //const orden = await MODELOS._orden.find({relations:['cliente','cliente_direccion']});
 
       //crear ordenDetalle
@@ -111,18 +124,7 @@ export class OrdenController {
         });
       }
 
-      const estadoOrden = await MODELOS._ordenEstado.create(
-        dataBody.orden_estado,
-      );
-
-      if (dataBody.orden_estado.pagado == 'true') {
-        estadoOrden.pagado = true;
-        estadoOrden.fecha_de_pago = new Date()
-          .toISOString()
-          .slice(0, 10) as any;
-      }
-      estadoOrden.orden = orden;
-      await MODELOS._ordenEstado.save(estadoOrden);
+   
 
       return {
         ok: true,
