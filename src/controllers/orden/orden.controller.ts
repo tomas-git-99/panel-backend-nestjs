@@ -34,7 +34,7 @@ export class OrdenController {
         where: {
           id: param.id_usuario,
         },
-        relations: ['carrito.producto.talles_ventas'],
+        relations: ['carrito.producto.talles_ventas','local'],
       });
 
       if(carrito.carrito.length <= 0 ){

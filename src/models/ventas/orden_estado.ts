@@ -13,7 +13,7 @@ export class OrdenEstado {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
+    @Column({default:null})
     metodo_de_pago: string;
 
     @Column({default:null})
