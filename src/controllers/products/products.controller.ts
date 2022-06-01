@@ -9,7 +9,7 @@ import { EstructuraTaller, Taller } from 'src/models/produccion/taller';
 import { ProductoVentas } from 'src/models/ventas/producto_ventas';
 import { TallesVentas } from 'src/models/ventas/talles_ventas';
 import { MODELOS } from 'src/todos_modelos/modelos';
-import { Like, Repository } from 'typeorm';
+import { Brackets, Like, Repository } from 'typeorm';
 import { addYears, subYears, format} from 'date-fns';
 
 @Controller('products')
@@ -178,45 +178,7 @@ export class ProductsController {
         const take = query.take || 10;
         const skip = query.skip || 0;
         const keyword = query.keyword || '';
-    
-   /*      const [result, total] = await this._productos.findAndCount(
-            {
-                where: [{ modelo: Like('%' + keyword + '%') }, {codigo: Like('%' + keyword + '%') }], order: { id: "DESC" },
-                relations: ['taller', 'estampado'],
-                select:{
-                    id: true,
-                    codigo: true,
-                    modelo: true,
-                    fecha_de_corte: true,
-                    edad: true,
-                    rollos: true,
-                    tela: true,
-                    peso_promedio: true,
-                    total_por_talle: true,
-                    talles: true,
-                    total: true,
-                    fecha_de_pago: true,
-                    cantidad_entregada: true,
-                    fecha_de_salida: true,
-                    fecha_de_entrada: true,
-                    estado_pago: true,
-                    enviar_distribucion: true,
-                    estampado:{
-                        id: true,
-                        dibujo: true
-                    },
-                    taller:{
-                        nombre_completo: true,
-                    },
 
-                },
-                
-                
-                take: take,
-                skip: skip
-            }
-        );
- */
         const dataQuery = {
             modelo: query.modelo || null,
             dibujo: query.dibujo || null,
@@ -239,7 +201,7 @@ export class ProductsController {
         .skip(skip)  */
    
            if(dataQuery.modelo != null && keyword != ''){
-               console.log("modelo")
+              
 
                qb.orWhere("producto.modelo like :modelo ", { modelo: `%${keyword}%`})
            }
@@ -251,12 +213,9 @@ export class ProductsController {
                    
                qb.orWhere("producto.peso_promedio like :peso_promedio ", { peso_promedio: `%${keyword}%`})
            }
-           if(dataQuery.taller != null && keyword != ''){
-               qb.orWhere("taller.nombre_completo like :nombre_completo ", { nombre_completo: `%${keyword}%`})
-
-           }
+      
            if(dataQuery.dibujo != null && keyword != ''){
-               console.log("dibujo")
+            
             qb.orWhere("estampado.dibujo like :dibujo ", { dibujo: `%${keyword}%`})
 
            }
@@ -264,7 +223,23 @@ export class ProductsController {
 
                qb.orWhere("producto.edad like :edad ", { edad: `%${keyword}%`})
 
+             
+
            }
+
+           if(dataQuery.taller != null ){
+
+            
+
+            //qb.andWhere("taller.id = :id ", { id: dataQuery.taller})
+
+            qb.andWhere(
+                new Brackets((qb) => {
+                    qb.andWhere("taller.id = :id ", { id: dataQuery.taller})
+                })
+                )
+
+        }
        
 
          

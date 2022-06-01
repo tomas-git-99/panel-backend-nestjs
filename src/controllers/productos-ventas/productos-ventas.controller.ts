@@ -280,31 +280,32 @@ export class ProductosVentasController {
                 
             }
 
+            
             if(categoria != null){
-
-              /*   qb.andWhere(
+          
+                qb.andWhere(
                     new Brackets((qb) => {
                         qb.where("categoria.id = :id", { id: categoria })
-                    })) */
+                    }))
+               
                 
-                qb.andWhere("categoria.id like :id", { id: categoria})
+                //qb.orWhere("categoria.id = :id", { id: categoria})
 
             }
-
           
-            if(local != null){
+            if(local != null && local != 0){
 
-             
+     
               qb.andWhere(
                 new Brackets((qb) => {
                     qb.where("local.id = :id", { id: local})
                     .orWhere("sub_local.id = :id", { id: local})
-                   /*  if(categoria != null){
-                        qb.andWhere("categoria.id like :id", { id: categoria})
-                    } */
+                
                 }))
                 
             }
+            
+           
 
            
         
