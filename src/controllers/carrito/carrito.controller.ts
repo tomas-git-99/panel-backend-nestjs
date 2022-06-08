@@ -1,4 +1,12 @@
-import { Controller, Delete, Get, Param, Post, Put, Request } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Request,
+} from '@nestjs/common';
 import { AppDataSource } from 'src/DBconfig/DataBase';
 import { carritoAgregar } from 'src/interface/interfaceGB';
 import { Producto } from 'src/models/produccion/producto';
@@ -11,13 +19,8 @@ import { MODELOS } from 'src/todos_modelos/modelos';
 import { Repository } from 'typeorm'; */
 @Controller('carrito')
 export class CarritoController {
-
-    constructor(
-  /*       @InjectRepository(Producto)
-        private usersRepository: Repository<Producto>, */
-    ){
-
-    }
+  constructor /*       @InjectRepository(Producto)
+        private usersRepository: Repository<Producto>, */() {}
   _productos = AppDataSource.getRepository(Producto);
   _usuario = AppDataSource.getRepository(Usuario);
   _carrito = AppDataSource.getRepository(Carrito);
@@ -33,16 +36,27 @@ export class CarritoController {
     try {
       const dataBody = request.body as unknown as carritoAgregar;
 
-  
-      for( let data of dataBody.data){
-        if(data.talle == null){
-
-            return {
-                ok:false,
-                message:"No se puede agregar el producto"
-            }
+      for (let data of dataBody.data) {
+        if (data.talle == null) {
+          return {
+            ok: false,
+            message: 'No se puede agregar el producto',
+          };
         }
       }
+
+      dataBody.data.map((x: any, i: any) => {
+        if (x.cantidad == '' || x.cantidad == 0) {
+          // eliminar por index con i
+
+          dataBody.data.splice(i, 1);
+        }
+
+        if (i == null) {
+          dataBody.data.splice(i, 1);
+        }
+      });
+
       const usuario = await this._usuario.findOne({
         where: { id: param.id_usuario },
         relations: ['carrito.producto'],
@@ -50,7 +64,7 @@ export class CarritoController {
 
       const productoSinStock: string[] = [];
 
-  /*     let actualizarTalles: any[] = []; */
+      /*     let actualizarTalles: any[] = []; */
 
       const productosVentas = await this._productoVentas.findOne({
         where: { id: param.id_producto },
@@ -62,23 +76,17 @@ export class CarritoController {
         ],
       });
 
-
-dataBody.data.map( e => {
-    productosVentas.talles_ventas.map((talles) => {
-
-        if(e.talle == talles.talles){
-
-            if(talles.cantidad == 0 || talles.cantidad < e.cantidad){
-                productoSinStock.push(
-                    `El talle:${talles.talles} no tiene stock suficiente`,
-                  );
+      dataBody.data.map((e) => {
+        productosVentas.talles_ventas.map((talles) => {
+          if (e.talle == talles.talles) {
+            if (talles.cantidad == 0 || talles.cantidad < e.cantidad) {
+              productoSinStock.push(
+                `El talle:${talles.talles} no tiene stock suficiente`,
+              );
             }
-        }
-
-    })
-})
- 
-     
+          }
+        });
+      });
 
       if (productoSinStock.length > 0) {
         return {
@@ -88,46 +96,128 @@ dataBody.data.map( e => {
         };
       }
 
+      if (
+        usuario.carrito.some((t) => t.producto.id == param.id_producto) == true
+      ) {
+        dataBody.data.map(async (y) => {
+          usuario.carrito.map((t) => {
+            /* if ( t.producto.id == param.id_producto  && t.talle == y.talle) {
+                console.log(y.talle + ' dentro');
 
-      
-      if(usuario.carrito.some( t => t.producto.id == param.id_producto) == true){
-      usuario.carrito
-      .filter( x => x.producto.id == param.id_producto)
-      .map( t => {
-        dataBody.data.map( y => {
-            if (t.talle == y.talle) {
-                t.cantidad +=  parseInt(y.cantidad as any) ;
-                productosVentas.talles_ventas.find( t => t.talles == y.talle).cantidad -= y.cantidad
+            }else{
+                console.log(y.talle + ' afuera');
 
-                this._tallesVentas.save(productosVentas.talles_ventas);
-                this._carrito.save(usuario.carrito);
-            }
-        })
-      })
-    }else{
-        dataBody.data.map( 
+            } */
+          });
+          if(usuario.carrito.some((t) => t.producto.id == param.id_producto && t.talle == y.talle) == true ){
+
+            
+            let carrito = usuario.carrito.find((t) => t.producto.id == param.id_producto && t.talle == y.talle);
+            carrito.cantidad +=
+            typeof y.cantidad == 'number'
+              ? y.cantidad
+              : parseInt(y.cantidad as any);
+
+          productosVentas.talles_ventas.find(
+            (t) => t.talles == y.talle,
+          ).cantidad -=
+            typeof y.cantidad == 'number'
+              ? y.cantidad
+              : parseInt(y.cantidad as any);
+
+        
+          await this._tallesVentas.save(productosVentas.talles_ventas);
+          await this._carrito.save(usuario.carrito);
+
+          }else{
+            //console.log(y.talle + ' afuera');
+            //let carritos = usuario.carrito.find((t) => t.producto.id == param.id_producto && t.talle != y.talle);
+
+            productosVentas.talles_ventas.find(
+                (t) => t.talles == y.talle,
+              ).cantidad -= y.cantidad;
+    
+              await this._tallesVentas.save(productosVentas.talles_ventas);
+    
+              const carrito = await this._carrito.create();
+              carrito.talle = y.talle;
+              carrito.cantidad = y.cantidad;
+    
+              carrito.producto = productosVentas;
+              carrito.usuario = usuario;
+    
+              await this._carrito.save(carrito);
+          }
 
 
-            async(x) => {
-                productosVentas.talles_ventas.find( t => t.talles == x.talle).cantidad -= x.cantidad
+        });
+
+      /*   let evitarRepetidos = [];
+        usuario.carrito
+          .filter((x) => x.producto.id == param.id_producto)
+          .map((t) => {
+            dataBody.data.map(async (y) => {
+              if (t.talle == y.talle) {
+                t.cantidad +=
+                  typeof y.cantidad == 'number'
+                    ? y.cantidad
+                    : parseInt(y.cantidad as any);
+
+                productosVentas.talles_ventas.find(
+                  (t) => t.talles == y.talle,
+                ).cantidad -=
+                  typeof y.cantidad == 'number'
+                    ? y.cantidad
+                    : parseInt(y.cantidad as any);
+
+                console.log(y.talle);
 
                 await this._tallesVentas.save(productosVentas.talles_ventas);
+                await this._carrito.save(usuario.carrito);
+              } else {
+                if (evitarRepetidos.some((d) => d == y.talle) == false) {
+                  if (t.talle !== y.talle) {
+                    evitarRepetidos.push(y.talle);
+                    console.log(y.talle + ' afuera');
+                  }
 
+                  console.log(evitarRepetidos)
+                           productosVentas.talles_ventas.find(
+                        (t) => t.talles == y.talle,
+                      ).cantidad -= y.cantidad;
+            
+                      await this._tallesVentas.save(productosVentas.talles_ventas);
+            
+                      const carrito = await this._carrito.create();
+                      carrito.talle = y.talle;
+                      carrito.cantidad = y.cantidad;
+            
+                      carrito.producto = productosVentas;
+                      carrito.usuario = usuario;
+            
+                      await this._carrito.save(carrito);
+                }
+              }
+            });
+          }); */
+      } else {
+        dataBody.data.map(async (x) => {
+          productosVentas.talles_ventas.find(
+            (t) => t.talles == x.talle,
+          ).cantidad -= x.cantidad;
 
-                const carrito = await this._carrito.create();
-                carrito.talle = x.talle;
-                carrito.cantidad = x.cantidad;
-                        
-                carrito.producto = productosVentas;
-                carrito.usuario = usuario;
+          await this._tallesVentas.save(productosVentas.talles_ventas);
 
-                await this._carrito.save(carrito);
+          const carrito = await this._carrito.create();
+          carrito.talle = x.talle;
+          carrito.cantidad = x.cantidad;
 
-            })
-    }
+          carrito.producto = productosVentas;
+          carrito.usuario = usuario;
 
-
-
+          await this._carrito.save(carrito);
+        });
+      }
 
       return {
         ok: true,
@@ -149,261 +239,232 @@ dataBody.data.map( e => {
         where: { id: param.id_usuario },
         relations: [
           'carrito',
-          'carrito.producto', 'carrito.producto.sub_local',
+          'carrito.producto',
+          'carrito.producto.sub_local',
           'carrito.producto.productoDetalles.producto.estampado',
         ],
-        select:{
-            id:true,
-            nombre:true,
-            usuario:true,
-            roles:true,
-            carrito:{
-                id:true,
-                talle:true,
-                cantidad:true,
-                precio_nuevo:true,
-                producto:{ 
-                    id:true,
-                    precio:true,
-                    color: true,
-                    sub_modelo:true,
-                    sub_dibujo: true,
-                    sub_local:{
-                        id:true,
-                        nombre:true,
-                    },
-                    productoDetalles:{ 
-                        id:true,
-                    
-                        producto:{
-                            id:true,
-                            codigo: true,
-                            modelo:true,
-                            edad: true,
-                            tela: true,
-                            estampado: { 
-                                id:true,
-                                dibujo:true,
-                            }
-                        }
-                        
-                    }
-                },
+        select: {
+          id: true,
+          nombre: true,
+          usuario: true,
+          roles: true,
+          carrito: {
+            id: true,
+            talle: true,
+            cantidad: true,
+            precio_nuevo: true,
+            producto: {
+              id: true,
+              precio: true,
+              color: true,
+              sub_modelo: true,
+              sub_dibujo: true,
+              sub_local: {
+                id: true,
+                nombre: true,
+              },
+              productoDetalles: {
+                id: true,
 
-            }
-        }
+                producto: {
+                  id: true,
+                  codigo: true,
+                  modelo: true,
+                  edad: true,
+                  tela: true,
+                  estampado: {
+                    id: true,
+                    dibujo: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       });
 
       return {
-          ok: true,
-          data: usuario,
+        ok: true,
+        data: usuario,
       };
     } catch (error) {
-        return{
-            ok: false,
-            message: error
-        }
+      return {
+        ok: false,
+        message: error,
+      };
     }
   }
 
   @Put('/:id_carrito')
-  async editarCarrito(@Param() param: { id_carrito: number },@Request() request: Request,): Promise<any> {
+  async editarCarrito(
+    @Param() param: { id_carrito: number },
+    @Request() request: Request,
+  ): Promise<any> {
     try {
       const carrito = await this._carrito.findOne({
         where: { id: param.id_carrito },
         relations: ['producto.talles_ventas'],
       });
 
-    const dataBody = request.body as unknown as {cantidad:number};
+      const dataBody = request.body as unknown as { cantidad: number };
 
-    let cantidadNueva = 0;
+      let cantidadNueva = 0;
 
-    carrito.producto.talles_ventas.map(async (talles) => {
+      carrito.producto.talles_ventas.map(async (talles) => {
         if (talles.talles == carrito.talle) {
+          if (carrito.cantidad > dataBody.cantidad) {
+            cantidadNueva = talles.cantidad +=
+              carrito.cantidad - dataBody.cantidad;
 
-            if(carrito.cantidad > dataBody.cantidad){
+            carrito.cantidad = dataBody.cantidad;
 
-                cantidadNueva = talles.cantidad += carrito.cantidad - dataBody.cantidad;
+            await MODELOS._carrito.save(carrito);
+          } else if (carrito.cantidad < dataBody.cantidad) {
+            cantidadNueva = talles.cantidad -=
+              dataBody.cantidad - carrito.cantidad;
 
-                carrito.cantidad = dataBody.cantidad;
+            carrito.cantidad = dataBody.cantidad;
 
-                await MODELOS._carrito.save(carrito);
-
- 
-            }else if(carrito.cantidad < dataBody.cantidad){
-
-                cantidadNueva = talles.cantidad -= dataBody.cantidad - carrito.cantidad;
-
-                carrito.cantidad = dataBody.cantidad;
-
-                await MODELOS._carrito.save(carrito);
-
-            }
-          
+            await MODELOS._carrito.save(carrito);
+          }
         }
-    });
+      });
 
+      if (cantidadNueva < 0) {
+        return {
+          ok: false,
+          message: 'No hay stock suficiente',
+        };
+      }
 
-    if(cantidadNueva < 0){
-        return{
-            ok:false,
-            message:"No hay stock suficiente"
-        }
-    }
-
-
-
-    carrito.producto.talles_ventas.map(async (talles) => {
+      carrito.producto.talles_ventas.map(async (talles) => {
         if (talles.talles == carrito.talle) {
-            talles.cantidad = cantidadNueva;
-            await this._tallesVentas.save(talles);
+          talles.cantidad = cantidadNueva;
+          await this._tallesVentas.save(talles);
         }
-    });
+      });
 
-    //await this._tallesVentas.save(carrito);
-
+      //await this._tallesVentas.save(carrito);
 
       return {
-          ok:true,
-          carrito: carrito,
+        ok: true,
+        carrito: carrito,
       };
     } catch (error) {
-       
-        return{
-            ok:false,
-            message:error
-
-        }
+      return {
+        ok: false,
+        message: error,
+      };
     }
   }
 
   //cambio de precio_nuevo
   @Put('/:id_usuario/:id_producto')
-    async editarPrecio(@Param() param: { id_usuario: number, id_producto: number},@Request() request: Request,): Promise<any> {
-        try {
+  async editarPrecio(
+    @Param() param: { id_usuario: number; id_producto: number },
+    @Request() request: Request,
+  ): Promise<any> {
+    try {
+      const dataBody = request.body as unknown as { precio_nuevo: number };
 
-    const dataBody = request.body as unknown as {precio_nuevo:number};
+      const usarioCarrito = await MODELOS._usuario.findOne({
+        where: { id: param.id_usuario },
+        relations: ['carrito.producto'],
+      });
 
-        
-
-            const usarioCarrito = await MODELOS._usuario.findOne({
-                where: {id: param.id_usuario},
-                relations: ['carrito.producto']
-            });
-
-            usarioCarrito.carrito.map( async (x) => {
-            
-                if(x.producto.id == param.id_producto){
-                    x.precio_nuevo = dataBody.precio_nuevo;
-                    await MODELOS._carrito.save(x);
-                }
-            })
-
-        
-
-            
-
-            return {
-                ok: true
-            }
-            
-        } catch (error) {
-            return{
-                ok:false,
-                message:error
-            }
+      usarioCarrito.carrito.map(async (x) => {
+        if (x.producto.id == param.id_producto) {
+          x.precio_nuevo = dataBody.precio_nuevo;
+          await MODELOS._carrito.save(x);
         }
+      });
+
+      return {
+        ok: true,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        message: error,
+      };
     }
+  }
 
-    @Delete('/:id_usuario/:id_producto')
-    async eliminarCarritoTodo(@Param() param: { id_usuario: number, id_producto: number}): Promise<any> {
-        try {
-           console.log('hola')
-            const usuario = await MODELOS._usuario.findOne(
-                {
-                    where: { id: param.id_usuario },
-                    relations: ['carrito.producto.talles_ventas'],
-                }
-            )
+  @Delete('/:id_usuario/:id_producto')
+  async eliminarCarritoTodo(
+    @Param() param: { id_usuario: number; id_producto: number },
+  ): Promise<any> {
+    try {
+      const usuario = await MODELOS._usuario.findOne({
+        where: { id: param.id_usuario },
+        relations: ['carrito.producto.talles_ventas'],
+      });
 
-
-            usuario.carrito.map( async(x) => {
-                if(x.producto.id == param.id_producto){
-                    x.producto.talles_ventas.find( y => y.talles == x.talle).cantidad += x.cantidad;
-                    await MODELOS._tallesVentas.save(x.producto.talles_ventas);
-                    await MODELOS._carrito.remove(x);
-                }
-            })
-
-          
-
-            return {
-                ok: true,
-                message: 'Se elimino el carrito',
-            };
-        } catch (error) {
-            return {
-                ok: false,
-                error,
-            };
+      await usuario.carrito.map(async (x) => {
+        if (x.producto.id == param.id_producto) {
+          x.producto.talles_ventas.find((y) => y.talles == x.talle).cantidad +=
+            x.cantidad;
+          await MODELOS._tallesVentas.save(x.producto.talles_ventas);
+          await MODELOS._carrito.remove(x);
         }
+      });
+
+      return {
+        ok: true,
+        message: 'Se elimino el carrito',
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error,
+      };
     }
+  }
 
-    //eliminar solo un producto del carrito
-    @Delete('/:id_carrito')
-    async eliminarCarritoProductoUno(@Param() param: { id_carrito: number}): Promise<any> {
+  //eliminar solo un producto del carrito
+  @Delete('/:id_carrito')
+  async eliminarCarritoProductoUno(
+    @Param() param: { id_carrito: number },
+  ): Promise<any> {
+    try {
+      const carrito = await this._carrito.findOne({
+        where: { id: param.id_carrito },
+        relations: ['producto.talles_ventas'],
+        select: {
+          id: true,
+          cantidad: true,
+          talle: true,
 
+          producto: {
+            id: true,
 
-        try {
+            talles_ventas: {
+              id: true,
+              talles: true,
+              cantidad: true,
+            },
+          },
+        },
+      });
 
-            const carrito = await this._carrito.findOne({
-                where: { id: param.id_carrito },
-                relations: ['producto.talles_ventas'],
-                select:{ 
-                    id:true,
-                    cantidad:true,
-                    talle:true,
-             
-                    producto:{ 
-                            id:true,
-            
-                            talles_ventas:{
-                                id:true,
-                                talles:true,
-                                cantidad:true,
-                            }
-                        }
-        
-                    }
-                
-            });
-
-            carrito.producto.talles_ventas.map( async (talles) => {
-                if(talles.talles == carrito.talle){
-                    talles.cantidad += carrito.cantidad;
-                    await this._tallesVentas.save(talles);
-                }
-            })
-
-            await this._carrito.remove(carrito);
-
-            return {
-                ok: true,
-                message: 'Se elimino el producto del carrito',
-            }
-
-     
-
-        } catch (error) {
-            return {
-                ok: false,
-                error,
-            }
+      carrito.producto.talles_ventas.map(async (talles) => {
+        if (talles.talles == carrito.talle) {
+          talles.cantidad += carrito.cantidad;
+          await this._tallesVentas.save(talles);
         }
+      });
+
+      await this._carrito.remove(carrito);
+
+      return {
+        ok: true,
+        message: 'Se elimino el producto del carrito',
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error,
+      };
     }
-
-
-    
-
-
+  }
 }
