@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Request } from '@nestjs/common';
+import { Controller, Get, Param, Post, Request } from '@nestjs/common';
 import { MODELOS } from 'src/todos_modelos/modelos';
 
 @Controller('local')
@@ -60,5 +60,83 @@ export class LocalController {
             };
         }
     }
-    
+
+
+    @Get('/:id/:id_local')
+    async agregarNuevoLocalAUsuario(@Request() request: Request,  @Param() param: { id: any, id_local: any}) {
+
+        try {
+
+            const usuario = await MODELOS._usuario.findOne({ where: { id: param.id } });
+
+            const nuevoPermisoLocal = MODELOS._PermisoLocales.create()
+            nuevoPermisoLocal.permisos = usuario.permisos;
+            nuevoPermisoLocal.local = param.id_local;
+
+
+            await MODELOS._PermisoLocales.save(nuevoPermisoLocal);
+
+            return {
+                ok: true,
+                data: nuevoPermisoLocal
+            }
+
+        }catch (error) {
+                
+                return {
+                    ok: false,
+                    error
+                };
+        }
+    }
+    @Post('/ventana/:id')
+    async agregarNuevoPermisoVentana(@Request() request: Request,  @Param() param: { id: any}){
+
+        try {
+
+            const bodyData = request.body as unknown as {id:number, nombre:string};
+            const usuario = await MODELOS._usuario.findOne({ where: { id: param.id } });
+
+            const nuevoPermisoVentana = MODELOS._PermisoVentanas.create()
+
+            nuevoPermisoVentana.permisos = usuario.permisos;
+            nuevoPermisoVentana.id_ventana = usuario.id;
+            nuevoPermisoVentana.nombre = bodyData.nombre;
+
+            await MODELOS._PermisoVentanas.save(nuevoPermisoVentana);
+
+            return {
+                ok: true,
+                data: nuevoPermisoVentana
+            }
+
+            
+        } catch (error) {
+            
+            return {
+                ok: false,
+                error
+            };
+        }
+    }
+
+    @Get('/permisos/crear')
+    async todosLosUsuarios(){
+
+        const usuarios = await MODELOS._usuario.find();
+
+        usuarios.map( async(e) => {
+
+            let permisos = await MODELOS._Permiso.create();
+
+            permisos.usuario = e;
+
+            await MODELOS._Permiso.save(permisos);
+        })
+
+        return {
+            ok: true,
+            data: usuarios
+        }
+    }
 }

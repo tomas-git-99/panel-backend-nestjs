@@ -1,5 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { Distribucion } from "../produccion/distribucion_producto";
+import { PermisosLocales } from "../usuarios/permisosLocales";
 import { Usuario } from "../usuarios/usuarios";
 import { Orden } from "./orden";
 import { OrdenEstado } from "./orden_estado";
@@ -31,6 +32,7 @@ export class Locales {
 
     @OneToMany(() => Distribucion , distribucion => distribucion.local)
     distribucion: Distribucion[];
+
     @OneToMany(() =>Usuario , usuario => usuario.local)
     usuarios: Usuario[];
 
@@ -42,5 +44,8 @@ export class Locales {
     
     @OneToMany(() => Orden, orden => orden.local_orden)
     ordenes: Orden[];
+
+    @OneToMany(() => PermisosLocales, permisosLocales => permisosLocales.local)
+    permisoLocal: PermisosLocales[];
 
 }

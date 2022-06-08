@@ -33,7 +33,16 @@ export class CarritoController {
     try {
       const dataBody = request.body as unknown as carritoAgregar;
 
+  
+      for( let data of dataBody.data){
+        if(data.talle == null){
 
+            return {
+                ok:false,
+                message:"No se puede agregar el producto"
+            }
+        }
+      }
       const usuario = await this._usuario.findOne({
         where: { id: param.id_usuario },
         relations: ['carrito.producto'],
@@ -68,23 +77,7 @@ dataBody.data.map( e => {
 
     })
 })
-  /*     productosVentas.talles_ventas.map((talles) => {
-       
-          if (
-
-            talles.cantidad < dataBody.data.find((x) => x.talle == talles.talles).cantidad || 
-            talles.cantidad == 0
-          ) {
-            productoSinStock.push(
-              `El talle:${talles.talles} no tiene stock suficiente`,
-            );
-          }
-
-        
-
-
-      }); */
-
+ 
      
 
       if (productoSinStock.length > 0) {
@@ -134,38 +127,7 @@ dataBody.data.map( e => {
     }
 
 
-  /*     dataBody.data.map( 
 
-
-          async(x) => {
-
-            if(usuario.carrito.some( t => t.talle == x.talle && t.producto.id == param.id_producto) == true){
-
-                usuario.carrito.find( x => x.talle == x.talle && x.producto.id == param.id_producto).cantidad += x.cantidad
-                productosVentas.talles_ventas.find( t => t.talles == x.talle).cantidad -= x.cantidad
-
-                this._tallesVentas.save(productosVentas.talles_ventas);
-                this._carrito.save(usuario.carrito);
-
-            }else{
-                
-                productosVentas.talles_ventas.find( t => t.talles == x.talle).cantidad -= x.cantidad
-
-                await this._tallesVentas.save(productosVentas.talles_ventas);
-
-
-                const carrito = await this._carrito.create();
-                carrito.talle = x.talle;
-                carrito.cantidad = x.cantidad;
-                        
-                carrito.producto = productosVentas;
-                carrito.usuario = usuario;
-
-                await this._carrito.save(carrito);
-            }
-    
-          }
-      ) */
 
       return {
         ok: true,
@@ -174,6 +136,7 @@ dataBody.data.map( e => {
     } catch (error) {
       console.log(error);
       return {
+        ok: false,
         error,
       };
     }

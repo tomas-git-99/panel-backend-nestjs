@@ -55,6 +55,7 @@ export class UsuariosController {
                         nombre:true,
                         usuario:true,
                         roles:true,
+                     
                     }
                 }
             );
@@ -83,7 +84,7 @@ export class UsuariosController {
                     where: { 
                         estado: true
                     },
-                    relations: ['local'],
+                    relations: ['local','permisos.permisosLocales.local','permisos.permisosVentanas'],
                     select:{
                         id:true,
                         nombre:true,
@@ -93,6 +94,22 @@ export class UsuariosController {
                         local:{
                             id:true,
                             nombre:true,
+                        },
+                        permisos:{
+                            id:true,
+                            permisosLocales:{
+                                id:true,
+                                local:{
+                                    id:true,
+                                    nombre:true
+
+                                }
+                            },
+                            permisosVentanas:{
+                                id:true,
+                                id_ventana: true,
+                                nombre:true,
+                            },
                         }
                     }
                 }

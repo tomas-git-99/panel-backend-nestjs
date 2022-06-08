@@ -1,8 +1,9 @@
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { Distribucion } from "../produccion/distribucion_producto";
 import { Carrito } from "../ventas/carrito";
 import { Locales } from "../ventas/locales";
 import { Orden } from "../ventas/orden";
+import { Permisos } from "./permisos";
 
 
 
@@ -56,6 +57,9 @@ export class Usuario {
     @OneToMany(() => Orden, orden => orden.local_orden)
     orden: Orden[];
 
+
+    @OneToOne( () => Permisos, permisos => permisos.usuario)
+    permisos: Permisos;
 
 
 }  

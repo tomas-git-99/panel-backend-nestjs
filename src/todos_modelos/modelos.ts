@@ -7,6 +7,9 @@ import { Estampado } from "src/models/produccion/estampados";
 import { Fallas } from "src/models/produccion/fallas";
 import { Producto } from 'src/models/produccion/producto';
 import { Taller } from "src/models/produccion/taller";
+import { Permisos } from "src/models/usuarios/permisos";
+import { PermisosLocales } from "src/models/usuarios/permisosLocales";
+import { PermisosVentanas } from "src/models/usuarios/permisosVentanas";
 import { Usuario } from 'src/models/usuarios/usuarios';
 import { Carrito } from 'src/models/ventas/carrito';
 import { Categoria } from "src/models/ventas/categoria";
@@ -47,6 +50,9 @@ export const MODELOS = {
     
     _fallas : AppDataSource.getRepository(Fallas),
     _categoria : AppDataSource.getRepository(Categoria),
+    _Permiso : AppDataSource.getRepository(Permisos),
+    _PermisoLocales : AppDataSource.getRepository(PermisosLocales),
+    _PermisoVentanas : AppDataSource.getRepository(PermisosVentanas),
 
 }
 
