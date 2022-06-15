@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Post, Put, Query, Request } from '@nestjs/common';
+import { Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Query, Request } from '@nestjs/common';
 import { ProductoVentas } from 'src/models/ventas/producto_ventas';
 import { MODELOS } from 'src/todos_modelos/modelos';
 import { Brackets, NotBrackets } from 'typeorm';
@@ -54,6 +54,7 @@ export class ProductosVentasController {
                 'productoVentas.color',
                 'productoVentas.sub_modelo',
                 'productoVentas.sub_dibujo',
+                'productoVentas.estado',
 
                 'talles_ventas.id',
                 'talles_ventas.cantidad',
@@ -78,7 +79,6 @@ export class ProductosVentasController {
             .orderBy("producto.id", "DESC")
             .take(take)
             .skip(skip)
-
 
         
             if(dataQuery.modelo != null && keyword != ''){
@@ -110,6 +110,7 @@ export class ProductosVentasController {
             qb.andWhere("producto.enviar_distribucion = :enviar_distribucion", { enviar_distribucion: true })
             qb.andWhere("producto.enviar_ventas = :enviar_ventas", { enviar_ventas: true })
             qb.andWhere("distribucion.estado_envio = :estado_envio", { estado_envio: true })
+            //qb.andWhere("productoVentas.estado = :estado", { estado:false})
 
             let [data, conteo] = await qb.getManyAndCount();
 
@@ -206,6 +207,7 @@ export class ProductosVentasController {
                 'producto_ventas.color',
                 'producto_ventas.sub_modelo',
                 'producto_ventas.sub_dibujo',
+                'producto_ventas.estado',
                 'sub_local.id',
                 'sub_local.nombre',
 
@@ -235,6 +237,7 @@ export class ProductosVentasController {
             .orderBy("producto_ventas.id", "DESC")
             .take(take)
             .skip(skip)
+           
 
 
             if(keyword != ''){
@@ -304,6 +307,7 @@ export class ProductosVentasController {
                 }))
                 
             }
+            qb.andWhere("producto_ventas.estado = :estado", { estado:true})
             
            
 
@@ -363,6 +367,7 @@ console.log(error)
                 'producto_ventas.color',
                 'producto_ventas.sub_modelo',
                 'producto_ventas.sub_dibujo',
+                'producto_ventas.estado',
 
                 'talles_ventas.id',
                 'talles_ventas.cantidad',
@@ -390,6 +395,7 @@ console.log(error)
             .orderBy("producto_ventas.id", "DESC")
             .take(take)
             .skip(skip)
+            .where("producto_ventas.estado = :estado", {estado: true} )
 
             let [data, conteo] = await qb.getManyAndCount();
 
@@ -429,7 +435,6 @@ console.log(error)
             data.talles.map( async(x) => {
 
                 const talles_ventas = MODELOS._tallesVentas.create();
-
                 talles_ventas.talles = x.talles;
                 talles_ventas.cantidad = x.cantidad;
                 talles_ventas.producto_ventas = productoVenta;
@@ -462,17 +467,31 @@ console.log(error)
         try {
             
 
-            const productoVenta = await MODELOS._productoVentas.findOne({where: {id: param.id}, relations: ['talles_ventas']});
+            const productoVenta = await MODELOS._productoVentas.findOne({where: {id: param.id }, relations: ['talles_ventas']});
+
+            console.log('hola')
 
 
-            productoVenta.talles_ventas.map( async(x) => {
+       /*      productoVenta.talles_ventas.map( async(x) => {
                     
                     await MODELOS._tallesVentas.remove(x);
                 }
-            )
+            ); */
 
-            await MODELOS._productoVentas.remove(productoVenta);
+    /* 
+            for(let data of productoVenta.talles_ventas){
 
+
+
+                await MODELOS._tallesVentas.remove(data)
+                
+            } */
+
+
+            //await MODELOS._productoVentas.remove(productoVenta);
+
+            productoVenta.estado = false;
+            await MODELOS._productoVentas.save(productoVenta);
 
             return{
                 ok: true,
@@ -480,8 +499,7 @@ console.log(error)
             }
 
         } catch (error) {
-        
-            console.log(error)
+
             return{
                 ok: false,
                 message: error

@@ -1,6 +1,6 @@
 import { Controller, Get, Put, Query, Request } from '@nestjs/common';
 import { MODELOS } from 'src/todos_modelos/modelos';
-import { Between } from 'typeorm';
+import { Between, IsNull, Not } from 'typeorm';
 
 @Controller('pagos')
 export class PagosController {
@@ -31,6 +31,8 @@ export class PagosController {
                       
                         fecha_de_entrada: Between(query.de, query.hasta),
                         estado_pago: false,
+                        cantidad_entregada: Not(IsNull()),
+                        //cantidad_entregada: IsNull(),
                     }
                 },
                 relations: ['producto'],
@@ -50,17 +52,22 @@ export class PagosController {
                 }
             })
 
+   
             return {
                 ok: true,
                 contador: conteo,
-                data: taller
+                data: taller == undefined ? [] : taller
             };
 
 
         
 
         } catch (error) {
-            
+            return{
+                ok: false,
+                data: error
+
+            }
         }
     }
 
@@ -70,7 +77,7 @@ export class PagosController {
         @Query() query:{ taller: number, de: Date, hasta: Date},
         @Request() request: Request
     ) {
-
+    
         try {
 
             const dataBody = request.body as unknown as [{ id:number, precio: number, total:number}]
@@ -79,7 +86,9 @@ export class PagosController {
                 where: {
                     id: query.taller,
                     producto:{
-                        fecha_de_entrada: Between(query.de, query.hasta)
+                        fecha_de_entrada: Between(query.de, query.hasta),
+                        estado_pago: false,
+                        cantidad_entregada: Not(IsNull()),
                     }
                 },
                 relations: ['producto'],
@@ -97,12 +106,17 @@ export class PagosController {
     
     
             //cambiar el estado por pagado y fecha correspondiente
+
+            //console.log(taller)
+            //console.log(taller.producto)
     
             taller.producto.map( async(x) => {
     
                 x.estado_pago = true;
                 x.fecha_de_pago = new Date().toISOString().slice(0, 10) as any;
-                x.precio = dataBody.find(  p => p.id == x.id).precio;
+                x.precio = dataBody.find(p => p.id == x.id).precio;
+
+                //console.log(x.precio)
                 await MODELOS._productos.save(x);
     
             })

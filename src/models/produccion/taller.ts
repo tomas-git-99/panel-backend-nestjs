@@ -19,13 +19,13 @@ export class Taller{
     @Column()
     nombre_completo: string;
 
-    @Column()
+    @Column({default:null, nullable: true})
     direccion:string;
 
-    @Column()
+    @Column({default:null, nullable: true})
     telefono:string;
 
-    @Column({default: true})
+    @Column({default: true, nullable: true})
     estado:boolean;
 
     

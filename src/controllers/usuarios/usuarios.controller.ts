@@ -187,8 +187,7 @@ export class UsuariosController {
                     }
                 })
 
-                console.log(usuario)
-
+            
             if(usuario){
                 if(usuario.password === loginData.password){
                    delete usuario.password;

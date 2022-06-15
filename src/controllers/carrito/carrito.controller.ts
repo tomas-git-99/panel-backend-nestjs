@@ -48,7 +48,6 @@ export class CarritoController {
       dataBody.data.map((x: any, i: any) => {
         if (x.cantidad == '' || x.cantidad == 0) {
           // eliminar por index con i
-
           dataBody.data.splice(i, 1);
         }
 
@@ -96,19 +95,23 @@ export class CarritoController {
         };
       }
 
+      //Ver si el producto para sumar ya esta en el carrito
       if (
         usuario.carrito.some((t) => t.producto.id == param.id_producto) == true
       ) {
         dataBody.data.map(async (y) => {
-          usuario.carrito.map((t) => {
-            /* if ( t.producto.id == param.id_producto  && t.talle == y.talle) {
+
+       /*    usuario.carrito.map((t) => {
+            if ( t.producto.id == param.id_producto  && t.talle == y.talle) {
                 console.log(y.talle + ' dentro');
 
             }else{
                 console.log(y.talle + ' afuera');
 
-            } */
-          });
+            }
+          }); */
+
+          //Pasa si es del mismo talle
           if(usuario.carrito.some((t) => t.producto.id == param.id_producto && t.talle == y.talle) == true ){
 
             
@@ -130,9 +133,11 @@ export class CarritoController {
           await this._carrito.save(usuario.carrito);
 
           }else{
+
             //console.log(y.talle + ' afuera');
             //let carritos = usuario.carrito.find((t) => t.producto.id == param.id_producto && t.talle != y.talle);
 
+            //UNICAMENTE PASA POR ESTE LUGAR SI EL PRODUCTO ESTA EN EL CARRITO PERO NO TIENE ESE TALLE
             productosVentas.talles_ventas.find(
                 (t) => t.talles == y.talle,
               ).cantidad -= y.cantidad;
@@ -152,55 +157,9 @@ export class CarritoController {
 
         });
 
-      /*   let evitarRepetidos = [];
-        usuario.carrito
-          .filter((x) => x.producto.id == param.id_producto)
-          .map((t) => {
-            dataBody.data.map(async (y) => {
-              if (t.talle == y.talle) {
-                t.cantidad +=
-                  typeof y.cantidad == 'number'
-                    ? y.cantidad
-                    : parseInt(y.cantidad as any);
-
-                productosVentas.talles_ventas.find(
-                  (t) => t.talles == y.talle,
-                ).cantidad -=
-                  typeof y.cantidad == 'number'
-                    ? y.cantidad
-                    : parseInt(y.cantidad as any);
-
-                console.log(y.talle);
-
-                await this._tallesVentas.save(productosVentas.talles_ventas);
-                await this._carrito.save(usuario.carrito);
-              } else {
-                if (evitarRepetidos.some((d) => d == y.talle) == false) {
-                  if (t.talle !== y.talle) {
-                    evitarRepetidos.push(y.talle);
-                    console.log(y.talle + ' afuera');
-                  }
-
-                  console.log(evitarRepetidos)
-                           productosVentas.talles_ventas.find(
-                        (t) => t.talles == y.talle,
-                      ).cantidad -= y.cantidad;
-            
-                      await this._tallesVentas.save(productosVentas.talles_ventas);
-            
-                      const carrito = await this._carrito.create();
-                      carrito.talle = y.talle;
-                      carrito.cantidad = y.cantidad;
-            
-                      carrito.producto = productosVentas;
-                      carrito.usuario = usuario;
-            
-                      await this._carrito.save(carrito);
-                }
-              }
-            });
-          }); */
       } else {
+
+        //PASA POR ACA SI EL PRODUCTO NO LO TIENEN EN EL CARRITO
         dataBody.data.map(async (x) => {
           productosVentas.talles_ventas.find(
             (t) => t.talles == x.talle,

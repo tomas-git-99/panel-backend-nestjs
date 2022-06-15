@@ -96,7 +96,8 @@ export class VentasController {
                 where: {
                     productoDetalles: {
                         local: Like('%' + keyword + '%')
-                    }
+                    },
+                    estado:true
                 },
                 relations: ['productoDetalles','talles_ventas'],
                 select: {

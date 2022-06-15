@@ -516,7 +516,7 @@ export class OrdenController {
         /*  relations:['orden_detalle.producto','orden_estado','nota','descuento'] */
       });
       const productosVentas = await MODELOS._productoVentas.findOne({
-        where: { id: dataBody.id_producto },
+        where: { id: dataBody.id_producto, estado:true },
         relations: [
           'productoDetalles',
           'productoDetalles.producto',
