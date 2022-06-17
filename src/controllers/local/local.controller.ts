@@ -128,9 +128,7 @@ export class LocalController {
 
             
             {
-                where:{
-                    usuario:Not('CUENCA')
-                },
+                
                 relations: ['local','permisos.permisosLocales.local','permisos.permisosVentanas'],
                     select:{
                         id:true,
@@ -161,14 +159,14 @@ export class LocalController {
                     }}
         );
 
-       /*  usuarios.map( async(e) => {
+        usuarios.map( async(e) => {
 
             let permisos = await MODELOS._Permiso.create();
 
             permisos.usuario = e;
 
             await MODELOS._Permiso.save(permisos);
-        }) */
+        })
 
         console.log('hola')
         return {
