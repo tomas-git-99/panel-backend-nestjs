@@ -173,16 +173,33 @@ export class UsuariosController {
                     where: {
                         usuario: loginData.usuario,
                     },
-                    relations: ['local'],
+                    relations: ['local','permisos.permisosLocales.local','permisos.permisosVentanas'],
                     select:{
                         id:true,
                         nombre:true,
                         usuario:true,
                         roles:true,
+                        dni_cuil:true,
                         password:true,
-                        local: {
+                        local:{
                             id:true,
                             nombre:true,
+                        },
+                        permisos:{
+                            id:true,
+                            permisosLocales:{
+                                id:true,
+                                local:{
+                                    id:true,
+                                    nombre:true
+
+                                }
+                            },
+                            permisosVentanas:{
+                                id:true,
+                                id_ventana: true,
+                                nombre:true,
+                            },
                         }
                     }
                 })

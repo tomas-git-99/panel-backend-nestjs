@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Post, Request } from '@nestjs/common';
 import { MODELOS } from 'src/todos_modelos/modelos';
+import { IsNull, Not } from 'typeorm';
 
 @Controller('local')
 export class LocalController {
@@ -120,20 +121,56 @@ export class LocalController {
         }
     }
 
-    @Get('/permisos/crear')
+    @Get('/permisos/crear/perrin')
     async todosLosUsuarios(){
 
-        const usuarios = await MODELOS._usuario.find();
+        const usuarios = await MODELOS._usuario.find(
 
-        usuarios.map( async(e) => {
+            
+            {
+                where:{
+                    usuario:Not('CUENCA')
+                },
+                relations: ['local','permisos.permisosLocales.local','permisos.permisosVentanas'],
+                    select:{
+                        id:true,
+                        nombre:true,
+                        usuario:true,
+                        roles:true,
+                        dni_cuil:true,
+                        local:{
+                            id:true,
+                            nombre:true,
+                        },
+                        permisos:{
+                            id:true,
+                            permisosLocales:{
+                                id:true,
+                                local:{
+                                    id:true,
+                                    nombre:true
+
+                                }
+                            },
+                            permisosVentanas:{
+                                id:true,
+                                id_ventana: true,
+                                nombre:true,
+                            },
+                        }
+                    }}
+        );
+
+       /*  usuarios.map( async(e) => {
 
             let permisos = await MODELOS._Permiso.create();
 
             permisos.usuario = e;
 
             await MODELOS._Permiso.save(permisos);
-        })
+        }) */
 
+        console.log('hola')
         return {
             ok: true,
             data: usuarios

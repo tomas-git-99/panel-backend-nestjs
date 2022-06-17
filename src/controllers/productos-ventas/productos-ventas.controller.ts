@@ -171,7 +171,7 @@ export class ProductosVentasController {
         take: number, 
         skip: number, 
         keyword,
-        local:number, 
+        local:any, 
         categoria:number,
         codigo:boolean,
         dibujo:boolean,
@@ -296,7 +296,7 @@ export class ProductosVentasController {
 
             }
           
-            if(local != null && local != 0){
+         /*    if(local != null && local != 0){
 
      
               qb.andWhere(
@@ -306,7 +306,27 @@ export class ProductosVentasController {
                 
                 }))
                 
-            }
+            } */
+            
+            if(local != null && local != 0){
+
+                //separarlo por la , y juntar en un array 
+                let locales = []
+                local.split(',')
+                .map( x => {
+                    locales.push(x)
+                })
+
+            
+                qb.andWhere(
+                  new Brackets((qb) => {
+                      qb.where("local.id IN (:...id)", { id: locales})
+                      .orWhere("sub_local.id IN (:...id)", { id:locales})
+                  
+                  }))
+                  
+              }
+
             qb.andWhere("producto_ventas.estado = :estado", { estado:true})
             
            

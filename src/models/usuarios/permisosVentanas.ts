@@ -16,5 +16,5 @@ export class PermisosVentanas {
     nombre: string;
 
     @ManyToOne( () => Permisos, permisos => permisos.permisosVentanas)
-    permisos: Permisos;
+    permisos: Permisos | number;
 }

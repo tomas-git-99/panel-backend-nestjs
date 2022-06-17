@@ -17,6 +17,7 @@ import { ProductosVentasController } from './controllers/productos-ventas/produc
 import { PagosController } from './controllers/pagos/pagos.controller';
 import { EstadoOrdenController } from './controllers/estado-orden/estado-orden.controller';
 import { VentasTallesController } from './controllers/ventas-talles/ventas-talles.controller';
+import { PermisosController } from './controllers/permisos/permisos.controller';
  
 
 @Module({
@@ -49,7 +50,8 @@ import { VentasTallesController } from './controllers/ventas-talles/ventas-talle
     ProductosVentasController,
     PagosController,
     EstadoOrdenController,
-    VentasTallesController
+    VentasTallesController,
+    PermisosController
   ],
   providers: [AppService],
 })

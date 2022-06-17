@@ -10,8 +10,8 @@ export class PermisosLocales {
     id: number;
 
     @ManyToOne( () => Permisos, permisos => permisos.permisosLocales)
-    permisos: Permisos;
+    permisos: Permisos | number;
 
     @ManyToOne( () => Locales, locales => locales.permisoLocal)
-    local: Locales;
+    local: Locales | number;
 }
