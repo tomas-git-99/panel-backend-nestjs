@@ -260,6 +260,8 @@ export class CarritoController {
     @Request() request: Request,
   ): Promise<any> {
     try {
+
+      console.log('hola perrin como estas')
       const carrito = await this._carrito.findOne({
         where: { id: param.id_carrito },
         relations: ['producto.talles_ventas'],
@@ -268,6 +270,20 @@ export class CarritoController {
       const dataBody = request.body as unknown as { cantidad: number };
 
       let cantidadNueva = 0;
+
+      //verificar si ahi stock suficiente
+      if (carrito.producto.talles_ventas.some((t) => t.talles == carrito.talle)) {
+        const tallesVentas = carrito.producto.talles_ventas.find(
+          (t) => t.talles == carrito.talle,
+        );
+        cantidadNueva = tallesVentas.cantidad - dataBody.cantidad;
+        if (cantidadNueva < 0) {
+          return {
+            ok: false,
+            message: 'No hay suficiente stock',
+          };
+        }
+      }
 
       carrito.producto.talles_ventas.map(async (talles) => {
         if (talles.talles == carrito.talle) {
@@ -289,12 +305,12 @@ export class CarritoController {
         }
       });
 
-      if (cantidadNueva < 0) {
+     /*  if (cantidadNueva < 0) {
         return {
           ok: false,
           message: 'No hay stock suficiente',
         };
-      }
+      } */
 
       carrito.producto.talles_ventas.map(async (talles) => {
         if (talles.talles == carrito.talle) {
@@ -368,6 +384,21 @@ export class CarritoController {
         }
       });
 
+/* 
+      console.log(param.id_producto);
+      console.log(param.id_usuario);
+
+      usuario.carrito
+      .filter((b) => b.producto.id == param.id_producto)
+      .map(async (x) => {
+  
+
+        //console.log(x)
+        x.producto.talles_ventas.find((y) => y.talles == x.talle).cantidad += x.cantidad;
+          await MODELOS._tallesVentas.save(x.producto.talles_ventas);
+          await MODELOS._carrito.remove(x);
+        
+      }); */
       return {
         ok: true,
         message: 'Se elimino el carrito',

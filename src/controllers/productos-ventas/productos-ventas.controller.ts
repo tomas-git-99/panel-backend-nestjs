@@ -245,13 +245,9 @@ export class ProductosVentasController {
                 new Brackets((qb) => {
                     qb.where("producto_ventas.sub_modelo like :sub_modelo ", { sub_modelo: `%${keyword}%`})
                     .orWhere(" producto.modelo like :modelo", {  modelo: `%${keyword}%`})
-                   
+                    
                 })
-                )
-
- /*            qb.where("producto_ventas.sub_modelo like :sub_modelo ", { sub_modelo: `%${keyword}%`})
-
-                qb.orWhere(" producto.modelo like :modelo", {  modelo: `%${keyword}%`}) */
+            )
             }
 
           
@@ -262,10 +258,16 @@ export class ProductosVentasController {
 
             if(dataQuery.codigo != null && keyword != ''){
 
-                
-        
-                qb.orWhere("producto.codigo like :codigo ", { codigo: `%${keyword}%`})
-                qb.orWhere("producto_ventas.id like :id ", { id: `%${keyword}%`})
+       /*          qb.orWhere("producto.codigo like :codigo ", { codigo: `%${keyword}%`})
+                qb.orWhere("producto_ventas.id like :id ", { id: `%${keyword}%`}) */
+                console.log(keyword);
+
+                qb.orWhere(
+                    new Brackets((qb) => {
+                        qb.where("producto.codigo like :codigo ", { codigo: `%${keyword}%`})
+                        .orWhere("producto_ventas.id like :id ", { id: `%${keyword}%`})
+                    })
+                )
            
 
             }
