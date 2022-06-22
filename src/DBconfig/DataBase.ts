@@ -28,6 +28,7 @@ import dotenv from 'dotenv';
 import { Permisos } from "src/models/usuarios/permisos";
 import { PermisosLocales } from "src/models/usuarios/permisosLocales";
 import { PermisosVentanas } from "src/models/usuarios/permisosVentanas";
+import { SumaOrden } from "src/models/ventas/sumaOrden";
 require('dotenv').config();
 
 
@@ -56,7 +57,8 @@ export const AppDataSource =  new DataSource({
         Locales, Cliente,
         ClienteDireccion,Descuento,
         Nota, Orden, OrdenDetalle, OrdenEstado,
-        Categoria, Permisos, PermisosLocales, PermisosVentanas
+        Categoria, Permisos, PermisosLocales, PermisosVentanas,
+        SumaOrden
         
         ],
 

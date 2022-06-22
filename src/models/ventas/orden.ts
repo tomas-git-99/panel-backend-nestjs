@@ -8,6 +8,7 @@ import { Locales } from "./locales";
 import { Nota } from "./nota";
 import { OrdenDetalle } from "./orden_detalle";
 import { OrdenEstado } from "./orden_estado";
+import { SumaOrden } from "./sumaOrden";
 
 
 
@@ -62,6 +63,9 @@ export class Orden {
 
     @OneToMany(() => Descuento , descuento => descuento.orden)
     descuento: Descuento[];
+
+    @OneToMany(() => SumaOrden , sumaorden => sumaorden.orden)
+    sumaOrden: SumaOrden[];
 
 
 

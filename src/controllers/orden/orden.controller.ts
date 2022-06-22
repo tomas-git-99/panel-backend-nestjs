@@ -343,6 +343,7 @@ export class OrdenController {
         .leftJoinAndSelect('nota.producto_ventas', 'producto_ventas')
 
         .leftJoinAndSelect('orden.descuento', 'descuento')
+        .leftJoinAndSelect('orden.sumaOrden', 'sumaOrden')
         .leftJoinAndSelect('orden.ordenEstado', 'ordenEstado')
         .leftJoinAndSelect('ordenEstado.armado', 'armado')
         .leftJoinAndSelect('orden.cliente', 'cliente')
@@ -387,6 +388,10 @@ export class OrdenController {
           'descuento.id',
           'descuento.precio',
           'descuento.motivo',
+
+          'sumaOrden.id',
+          'sumaOrden.precio',
+          'sumaOrden.motivo',
 
           'ordenEstado.id',
           'ordenEstado.metodo_de_pago',

@@ -22,6 +22,7 @@ import { Orden } from 'src/models/ventas/orden';
 import { OrdenDetalle } from "src/models/ventas/orden_detalle";
 import { OrdenEstado } from "src/models/ventas/orden_estado";
 import { ProductoVentas } from 'src/models/ventas/producto_ventas';
+import { SumaOrden } from "src/models/ventas/sumaOrden";
 import { TallesVentas } from 'src/models/ventas/talles_ventas';
 
 
@@ -40,6 +41,7 @@ export const MODELOS = {
     _clienteDireccion : AppDataSource.getRepository(ClienteDireccion),
     _nota : AppDataSource.getRepository(Nota),
     _descuento : AppDataSource.getRepository(Descuento),
+    _sumaOrden : AppDataSource.getRepository(SumaOrden),
     _locales : AppDataSource.getRepository(Locales),
     _taller : AppDataSource.getRepository(Taller),
 
