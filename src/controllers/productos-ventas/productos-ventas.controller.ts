@@ -223,6 +223,7 @@ export class ProductosVentasController {
           'producto_ventas.color',
           'producto_ventas.sub_modelo',
           'producto_ventas.sub_dibujo',
+          'producto_ventas.sub_tela',
           'producto_ventas.estado',
           'sub_local.id',
           'sub_local.nombre',

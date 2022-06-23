@@ -30,6 +30,10 @@ export class ProductoVentas {
     @Column({default:true})
     estado: boolean;
 
+    
+    @Column({default:null, nullable: true})
+    sub_tela: string;
+
     @ManyToOne(() => Locales , locales => locales.productosVentas)
     sub_local: Locales;
 

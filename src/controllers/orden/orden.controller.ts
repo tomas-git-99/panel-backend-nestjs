@@ -276,6 +276,7 @@ export class OrdenController {
 
           'nota.producto_ventas.productoDetalles.producto.estampado',
           'descuento',
+          'sumaOrden',
           'ordenEstado.armado',
           'cliente',
           'cliente_direccion',
