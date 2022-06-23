@@ -8,8 +8,10 @@ import {
   Query,
   Request,
 } from '@nestjs/common';
+import { sign, SignOptions, verify, TokenPayload} from 'jsonwebtoken';
 
 import { crearClienteDireccion } from 'src/helpers/crearCliente';
+import { crearToken } from 'src/helpers/jwt';
 import { defaultNULL } from 'src/helpers/nullDefault';
 import {
   carritoAgregar,
@@ -283,9 +285,12 @@ export class OrdenController {
         ],
       });
 
+      const token = crearToken(param.id_orden, process.env.KEY_SECRET_ORDEN)
+
       return {
         ok: true,
         data: orden,
+        token:token
       };
     } catch (error) {
       console.error(error);
@@ -651,6 +656,50 @@ export class OrdenController {
         ok: false,
         error: error,
       };
+    }
+  }
+
+  @Get('ticket/t/verificar')
+  async getOrdenConIDToken(
+    @Query()
+    query: {
+      token:string
+    }
+  ){
+
+    try {
+
+      const { id } = verify(query.token, process.env.KEY_SECRET_ORDEN)
+
+      const orden = await MODELOS._orden.findOne({
+        where: {
+          id: id,
+        },
+        order: { created_at: 'ASC' },
+        relations: [
+          'orden_detalle.productoVentas.productoDetalles.producto.estampado',
+          'orden_detalle.productoVentas.productoDetalles.local',
+
+          'nota.producto_ventas.productoDetalles.producto.estampado',
+          'descuento',
+          'sumaOrden',
+          'ordenEstado.armado',
+          'cliente',
+          'cliente_direccion',
+        ],
+      });
+
+      return {
+        ok: true,
+        data: orden,
+      };
+
+      
+    } catch (error) {
+      return {
+        ok:false,
+        msg:error
+      }
     }
   }
 }
