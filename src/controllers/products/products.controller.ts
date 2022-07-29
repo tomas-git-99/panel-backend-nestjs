@@ -241,6 +241,7 @@ export class ProductsController {
 
         }
        
+        qb.andWhere("producto.sub_producto = :sub_producto ", { sub_producto: false});
 
          
 
@@ -288,7 +289,10 @@ export class ProductsController {
     
         const [producto, total] = await this._productos.findAndCount(
             {
-                where: [{ modelo: Like('%' + keyword + '%'), enviar_distribucion:true, enviar_ventas:true}, {codigo: Like('%' + keyword + '%'), enviar_distribucion:true, enviar_ventas:true}  ],
+                where: [
+                    { modelo: Like('%' + keyword + '%'),sub_producto:false, enviar_distribucion:true, enviar_ventas:true}, 
+                    {codigo: Like('%' + keyword + '%'),sub_producto:false, enviar_distribucion:true, enviar_ventas:true},
+               ],
                 order: { fecha_de_envio_ventas: "ASC" }, 
         
             
@@ -308,6 +312,7 @@ export class ProductsController {
                     enviar_distribucion: true,
                     enviar_ventas: true,
                     fecha_de_envio_ventas: true,
+                    sub_producto:true,
                     distribucion: {
                         id: true,
                         usuario: {

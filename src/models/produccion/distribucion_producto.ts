@@ -24,8 +24,7 @@ export class Distribucion {
 
     @ManyToOne(() => Producto, products => products.distribucion)
     @JoinColumn({ name:"id_producto"})
-    producto:Producto ;
-
+    producto:Producto;
 
     @OneToMany(() => DistribucionTalle, distribucionTalle => distribucionTalle.distribucion)
     talle: DistribucionTalle[];

@@ -43,8 +43,8 @@ export class DistribucionController {
 
     const [producto, total] = await this._productos.findAndCount({
       where: [
-        { modelo: Like('%' + keyword + '%'), enviar_distribucion: true },
-        { codigo: Like('%' + keyword + '%'), enviar_distribucion: true },
+        { modelo: Like('%' + keyword + '%'), enviar_distribucion: true , sub_producto:false},
+        { codigo: Like('%' + keyword + '%'), enviar_distribucion: true  , sub_producto:false},
       ],
       order: { modelo: 'DESC' },
 

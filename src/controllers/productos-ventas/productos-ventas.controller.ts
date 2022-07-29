@@ -10,6 +10,7 @@ import {
   Query,
   Request,
 } from '@nestjs/common';
+import { Producto } from 'src/models/produccion/producto';
 import { ProductoVentas } from 'src/models/ventas/producto_ventas';
 import { MODELOS } from 'src/todos_modelos/modelos';
 import { Brackets, NotBrackets } from 'typeorm';
@@ -78,6 +79,8 @@ export class ProductosVentasController {
           'producto.codigo',
           'producto.tela',
           'producto.edad',
+          'producto.sub_producto',
+          
 
           'estampado.id',
           'estampado.dibujo',
@@ -114,6 +117,9 @@ export class ProductosVentasController {
         qb.andWhere('local.id = :id', { id: local });
       }
 
+
+
+
       qb.andWhere('producto.enviar_distribucion = :enviar_distribucion', {
         enviar_distribucion: true,
       });
@@ -123,6 +129,11 @@ export class ProductosVentasController {
       qb.andWhere('distribucion.estado_envio = :estado_envio', {
         estado_envio: true,
       });
+
+
+      
+
+    
       //qb.andWhere("productoVentas.estado = :estado", { estado:false})
 
       let [data, conteo] = await qb.getManyAndCount();
@@ -505,5 +516,124 @@ export class ProductosVentasController {
         message: error,
       };
     }
+  }
+
+
+  @Get('/prueba/full/todo')
+  async geTodo(){
+
+
+    return{
+      ok:true,
+      msg:"todo correcto"
+    }
+  }
+
+  @Post('/agregar/grupo')
+  async postCrearGrupo( @Request() request: Request){
+
+    try {
+      let body = request.body as  unknown as Producto;
+
+      body["sub_producto"] = true;
+      let result = MODELOS._productos.create(body);
+
+      result.enviar_distribucion = true;
+      result.enviar_ventas = true;
+      await MODELOS._productos.save(result);
+
+ 
+      if(body['dibujo'] != undefined){
+
+        let data = MODELOS._estampado.create();
+        data.dibujo = body['dibujo'];
+        data.producto = result;
+        await MODELOS._estampado.save(data);
+
+      }
+
+
+      return {
+        ok: true,
+        msg:"se creo con exito!"
+      }
+      
+    } catch (error) {
+      return{
+        ok: false,
+        msg: error
+      }
+    }
+  }
+
+  @Post('/agregar/grupo/:id_grupo/:id_producto')
+  async postAgregarAlGrupo(
+    @Request() request: Request,
+    @Param() param: { id_grupo: number,id_producto:number },
+    ){
+
+    try {
+
+      let productoAgregar = await MODELOS._productoVentas.findOne({where:{id:param.id_producto},relations: ['sub_local']});
+      let grupo = await MODELOS._productos.findOne({where:{id:param.id_grupo},relations: ['distribucion.local']});
+
+
+      for( let x of grupo.distribucion){
+        if(x.local.id == productoAgregar.sub_local.id){
+          return {
+            ok: false,
+            cod: 1,
+            msg:"No se pueden repetir locales en el mismo grupo"
+          }
+        }
+      }
+
+      let distribucion = MODELOS._distribucion.create();
+      distribucion.productoVentas = productoAgregar;
+      distribucion.producto = grupo;
+      distribucion.estado_envio = true;
+      distribucion.local = productoAgregar.sub_local;
+  
+
+      await MODELOS._distribucion.save(distribucion);
+
+      return {
+        ok: true,
+        msg:"se creo con exito!"
+      }
+      
+      
+    } catch (error) {
+      console.log(error);
+      return{
+        ok: false,
+        msg: error
+      }
+    }
+  }
+
+  @Get('/solo/grupos/all/s')
+  async getObtenerSoloGrupos() {
+
+
+    const qb = await MODELOS._productos
+    .createQueryBuilder('producto')
+    .leftJoinAndSelect('producto.estampado', 'estampado')
+    .orderBy('producto.id', 'DESC')
+   
+
+    qb.andWhere('producto.sub_producto = :sub_producto', {
+      sub_producto: true,
+    });
+
+
+
+ let [data, conteo] = await qb.getManyAndCount();
+
+      return {
+        ok: true,
+        data: data,
+        contador: conteo,
+      };
   }
 }

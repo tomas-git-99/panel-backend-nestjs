@@ -90,6 +90,12 @@ export class Producto{
    precio:number;
     //relacions con otras tablas
 
+
+    //Esta table fue creada para cuando los productos no pasan por producion ni districuion
+
+    @Column({default:false})
+    sub_producto:boolean;
+
     //estampado
     @OneToOne(() => Estampado, estampado => estampado.producto, {
         cascade: true,
