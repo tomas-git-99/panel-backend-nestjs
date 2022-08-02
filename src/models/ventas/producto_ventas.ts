@@ -18,7 +18,7 @@ export class ProductoVentas {
     @Column()
     precio: number;
 
-    @Column()
+    @Column({default: null})
     color: string;
 
     @Column({default: null})
