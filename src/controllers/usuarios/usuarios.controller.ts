@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Put, Request } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Put, Request } from '@nestjs/common';
 import { AppDataSource } from 'src/DBconfig/DataBase';
 import { Usuario } from 'src/models/usuarios/usuarios';
 import { MODELOS } from 'src/todos_modelos/modelos';
@@ -16,10 +16,27 @@ export class UsuariosController {
             
               //Creacion de producto
               let usuarios:any = request.body as unknown as Usuario;
+
+
+              let verificarUsuario = await MODELOS._usuario.findOne({where: { usuario: usuarios.usuario} })
+              if(verificarUsuario != null){
+
+                return {
+                    ok:false,
+                    cod:1,
+                    msg:"No se puede usar el mis usuario para mas de dos cuentas: " + usuarios.usuario
+                }
+              }
     
               const usuario:any = this._usuarios.create(usuarios);
       
               await this._usuarios.save(usuario);
+
+              const permiso = MODELOS._Permiso.create();
+              
+              permiso.usuario = usuario;
+
+              await MODELOS._Permiso.save(permiso);
       
               return {
                   ok: true,
@@ -234,5 +251,39 @@ export class UsuariosController {
             }
         }
 
+    }
+
+
+    @Delete("/:id")
+    async eliminarUsuario(@Param() param: { id: number }){
+
+        try {
+
+            const usuario = await MODELOS._usuario.findOne({ where: { id: param.id }, 
+                relations:["permisos.permisosLocales", "permisos.permisosVentanas"] })
+
+
+            if(usuario.permisos.permisosLocales){
+                usuario.permisos.permisosLocales.map( async(x) => {
+            await MODELOS._PermisoLocales.delete(x.id);
+
+                })
+            }
+
+            if(usuario.permisos.permisosVentanas){
+                usuario.permisos.permisosVentanas.map( async(x) => {
+            await MODELOS._PermisoVentanas.delete(x.id);
+
+                })
+            }
+
+
+            await MODELOS._Permiso.delete(usuario.permisos.id);
+            await MODELOS._usuario.delete(param.id);
+            return {ok: true, msg: 'Usuario eliminado correctamente'}
+        } catch (error) {
+            console.log(error)
+            return { ok:false, msg: error}
+        }
     }
 }

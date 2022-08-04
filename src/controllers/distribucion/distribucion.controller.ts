@@ -419,4 +419,59 @@ export class DistribucionController {
       
     }
   }
+  @Delete('/full/delete/t/:id_producto')
+  async eliminarDisctribucionProducto(
+    @Param() param: {id_producto: number },
+  ){
+
+    try {
+
+      const producto = await MODELOS._productos.findOne({
+        where: { id:param.id_producto}, 
+        relations: ['estampado', 'distribucion'],
+        select: {
+          id: true,
+          modelo: true,
+          estampado: {
+            id: true,
+            dibujo: true,
+          },
+          distribucion: {
+            id: true,
+          }
+        }
+      });
+
+      producto.distribucion.map( async(x) => {
+
+        await MODELOS._distribucion.delete(x.id);
+
+      });
+
+      if(producto.estampado != null){
+
+        await MODELOS._estampado.delete(producto.estampado.id);
+
+      };
+
+
+      await MODELOS._productos.delete(producto.id);
+
+
+      return {
+        ok: true,
+        msg:"Se elimino correctamente"
+      }
+
+
+    
+    } catch (error) {
+      return {
+        ok: false,
+        msg:error
+      }
+
+    }
+  }
+  
 }
