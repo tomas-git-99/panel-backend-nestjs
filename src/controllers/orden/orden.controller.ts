@@ -267,6 +267,7 @@ export class OrdenController {
   @Get('/:id_orden')
   async getOrden(@Param() param: { id_orden: number }): Promise<any> {
     try {
+
       const orden = await MODELOS._orden.findOne({
         where: {
           id: param.id_orden,

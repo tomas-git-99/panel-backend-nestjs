@@ -103,13 +103,16 @@ export class ProductsController {
                 await MODELOS._productos.save(producto);
 
             }else if(Object.keys(updateProducto)[0] == 'enviar_ventas'){
+
                 if(updateProducto.enviar_ventas == true){
                     const tiempoTranscurrido = Date.now();
                     const hoy:any = format(new Date(), 'yyyy-MM-dd');
-                    const producto = await MODELOS._productos.findOne({where: {id: param.id}});
+                    const producto = await MODELOS._productos.findOne({where: {id: param.id}, relations:['distribucion']});
                     producto.enviar_ventas = true;
                     producto.fecha_de_envio_ventas =  hoy;
                     await MODELOS._productos.save(producto);
+
+                
                 }else{
                     const producto = await MODELOS._productos.findOne({where: {id: param.id}});
                     producto.enviar_ventas = false;
@@ -290,10 +293,10 @@ export class ProductsController {
         const [producto, total] = await this._productos.findAndCount(
             {
                 where: [
-                    { modelo: Like('%' + keyword + '%'),sub_producto:false, enviar_distribucion:true, enviar_ventas:true}, 
+                    {modelo: Like('%' + keyword + '%'),sub_producto:false, enviar_distribucion:true, enviar_ventas:true}, 
                     {codigo: Like('%' + keyword + '%'),sub_producto:false, enviar_distribucion:true, enviar_ventas:true},
                ],
-                order: { fecha_de_envio_ventas: "ASC" }, 
+                order: { updatedAt:"DESC" }, 
         
             
                 relations: ['estampado', 'distribucion', 'distribucion.talle','distribucion.local','distribucion.usuario'],
@@ -313,6 +316,7 @@ export class ProductsController {
                     enviar_ventas: true,
                     fecha_de_envio_ventas: true,
                     sub_producto:true,
+                    updatedAt: true,
                     distribucion: {
                         id: true,
                         usuario: {
@@ -339,7 +343,9 @@ export class ProductsController {
 
             }
         );
-    
+
+
+
         return {
             ok: true,
             data: producto,
@@ -365,9 +371,9 @@ export class ProductsController {
 
                 }
                 
-                )
-            productoDistribucion.productoDetalles = dataTalles;
+                );
 
+            productoDistribucion.productoDetalles = dataTalles;
             await this._productosVentas.save(productoDistribucion);
 
 
