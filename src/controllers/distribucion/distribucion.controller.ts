@@ -117,6 +117,8 @@ export class DistribucionController {
           relations: ['talle','local'],
         })
 
+      
+
         if(distribuciones != null){
 
           e.talle.map( async(t) => {

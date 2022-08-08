@@ -36,7 +36,7 @@ export class Distribucion {
     //usuarios
 
     @ManyToOne(() => Usuario, user => user.distribucion_armado)
-    usuario: Usuario ;
+    usuario: Usuario;
 
     @OneToOne(() => ProductoVentas)
     @JoinColumn()
