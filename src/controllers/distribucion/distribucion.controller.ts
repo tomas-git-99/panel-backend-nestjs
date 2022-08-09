@@ -7,10 +7,11 @@ import {
   Query,
   Request,
 } from '@nestjs/common';
-
+import fi from 'date-fns/esm/locale/fi/index.js';
 
 import { zip } from 'rxjs';
 import { AppDataSource } from 'src/DBconfig/DataBase';
+import { Descontar } from 'src/helpers/descontar_produccion';
 import { Front_Distribucion_Productos } from 'src/interface/interfaceGB';
 import { Distribucion } from 'src/models/produccion/distribucion_producto';
 import { DistribucionTalle } from 'src/models/produccion/distribucion_talles';
@@ -34,7 +35,7 @@ export class DistribucionController {
 
   @Get()
   async getProductosPorCodigo(
-    @Query() query: { take: number; skip: number; keyword},
+    @Query() query: { take: number; skip: number; keyword },
   ): Promise<any> {
     const take = query.take || 10;
     const skip = query.skip || 0;
@@ -43,12 +44,25 @@ export class DistribucionController {
 
     const [producto, total] = await this._productos.findAndCount({
       where: [
-        { modelo: Like('%' + keyword + '%'), enviar_distribucion: true , sub_producto:false},
-        { codigo: Like('%' + keyword + '%'), enviar_distribucion: true  , sub_producto:false},
+        {
+          modelo: Like('%' + keyword + '%'),
+          enviar_distribucion: true,
+          sub_producto: false,
+        },
+        {
+          codigo: Like('%' + keyword + '%'),
+          enviar_distribucion: true,
+          sub_producto: false,
+        },
       ],
       order: { modelo: 'DESC' },
 
-      relations: ['estampado', 'distribucion.talle','distribucion.usuario', 'distribucion.local'],
+      relations: [
+        'estampado',
+        'distribucion.talle',
+        'distribucion.usuario',
+        'distribucion.local',
+      ],
       select: {
         estampado: {
           dibujo: true,
@@ -68,17 +82,16 @@ export class DistribucionController {
             id: true,
             nombre: true,
           },
-          usuario:{
-            id:true,
-            nombre:true,
-            
+          usuario: {
+            id: true,
+            nombre: true,
           },
           talle: {
             id: true,
             cantidad: true,
             talle: true,
             cantidad_actual: true,
-          }
+          },
         },
       },
 
@@ -101,81 +114,69 @@ export class DistribucionController {
   ): Promise<any> {
     try {
       //const productos = request.body as unknown as Front_Distribucion_Productos[];
-      const productos = request.body as unknown as Front_Distribucion_Productos[];
+      const productos =
+        request.body as unknown as Front_Distribucion_Productos[];
 
       const producto = await this._productos.findOneBy({
         id: param.id,
       });
 
-      let conteoDeProducto: any = 0;
+      //producto.cantidad_actual -= classDecontador.TOTAL_A_DESCONTAR;
+      //await this._productos.save(producto);
 
+      let conteoDeProducto: number = 0;
 
-      productos.map(async(e) => {
-   
-        const distribuciones = await this._distribucion.findOne({
-          where: { producto:{id:param.id} , local: {id:e.local}},
-          relations: ['talle','local'],
-        })
-
-      
-
-        if(distribuciones != null){
-
-          e.talle.map( async(t) => {
-           
-              const distribucionTalle = this._distribucionTalles.create();
-              distribucionTalle.talle = t.talle;
-              distribucionTalle.cantidad = t.cantidad;
-              distribucionTalle.cantidad_actual = t.cantidad;
-              distribucionTalle.distribucion = distribuciones;
-              conteoDeProducto += parseInt(t.cantidad);
-              producto.cantidad_actual -= parseInt(t.cantidad);
-
-              await this._distribucionTalles.save(distribucionTalle);
-
-          })
-          
-          
-
-        }else{
-          
-
-            const distribucion = this._distribucion.create();
-            distribucion.local = e.local;
-            distribucion.producto = producto;
-            distribucion.usuario = param.id_usuario;
-            await this._distribucion.save(distribucion);
-
-            e.talle.map( async(t) => {
-                const distribucionTalle = this._distribucionTalles.create();
-                distribucionTalle.talle = t.talle;
-                distribucionTalle.cantidad = t.cantidad;
-                distribucionTalle.cantidad_actual = t.cantidad;
-                distribucionTalle.distribucion = distribucion;
-                conteoDeProducto += parseInt(t.cantidad);
-                producto.cantidad_actual -= parseInt(t.cantidad);
-                await this._distribucionTalles.save(distribucionTalle);
-
-            })
-
-          
-
-        }
-      
-        //producto.cantidad_actual -= parseInt(conteoDeProducto)
-        await this._productos.save(producto);
-        
+      productos.forEach((x) => {
+        x.talle.forEach((e) => {
+          conteoDeProducto +=
+            typeof e.cantidad == 'string' ? parseInt(e.cantidad) : e.cantidad;
+        });
       });
-      
-      
+
+      productos.map(async (e) => {
+        const distribuciones = await this._distribucion.findOne({
+          where: { producto: { id: param.id }, local: { id: e.local } },
+          relations: ['talle', 'local'],
+        });
+
+        if (distribuciones != null) {
+          e.talle.map(async (t) => {
+            const distribucionTalle = this._distribucionTalles.create();
+            distribucionTalle.talle = t.talle;
+            distribucionTalle.cantidad = t.cantidad;
+            distribucionTalle.cantidad_actual = t.cantidad;
+            distribucionTalle.distribucion = distribuciones;
+            //conteoDeProducto += parseInt(t.cantidad);
+            //producto.cantidad_actual -= parseInt(t.cantidad);
+            await this._distribucionTalles.save(distribucionTalle);
+          });
+        } else {
+          const distribucion = this._distribucion.create();
+          distribucion.local = e.local;
+          distribucion.producto = producto;
+          distribucion.usuario = param.id_usuario;
+          await this._distribucion.save(distribucion);
+
+          e.talle.map(async (t) => {
+            const distribucionTalle = this._distribucionTalles.create();
+            distribucionTalle.talle = t.talle;
+            distribucionTalle.cantidad = t.cantidad;
+            distribucionTalle.cantidad_actual = t.cantidad;
+            distribucionTalle.distribucion = distribucion;
+            //conteoDeProducto += parseInt(t.cantidad);
+            //producto.cantidad_actual -= parseInt(t.cantidad);
+            await this._distribucionTalles.save(distribucionTalle);
+          });
+        }
+      });
+
+      producto.cantidad_actual -= conteoDeProducto;
+      await this._productos.save(producto);
 
       return {
         ok: true,
-        message: 'Se creo la distribucion correctamente'
-
+        message: 'Se creo la distribucion correctamente',
       };
-
-      
     } catch (error) {
       console.log(error);
       return {
@@ -192,36 +193,32 @@ export class DistribucionController {
 
   @Delete('/todo/t/:id_distribucion')
   async eliminarDistribucion(
-    @Param() param: { id_distribucion: number; },
+    @Param() param: { id_distribucion: number },
   ): Promise<any> {
     try {
-
       const distribucion = await this._distribucion.findOne({
         where: { id: param.id_distribucion },
-        relations: ['talle','producto','local'],
+        relations: ['talle', 'producto', 'local'],
       });
 
       let contadorTotal: number = 0;
-      
+
       distribucion.talle.map((e) => {
         contadorTotal += e.cantidad_actual;
       });
 
-      distribucion.talle.map(async(e) => {
+      distribucion.talle.map(async (e) => {
         await MODELOS._distribucionTalles.remove(e);
       });
 
       distribucion.producto.cantidad_actual += contadorTotal;
       await MODELOS._productos.save(distribucion.producto);
-      await MODELOS._distribucion.delete(  param.id_distribucion );
-
+      await MODELOS._distribucion.delete(param.id_distribucion);
 
       return {
         ok: true,
         message: 'Se elimino la distribucion correctamente',
       };
-
-      
     } catch (error) {
       console.log(error);
       return {
@@ -233,34 +230,29 @@ export class DistribucionController {
   }
 
   @Delete('/:id_talleDistribucion')
-  async eliminarDistribucionTalle( @Param() param: { id_talleDistribucion: number; })  {
-
+  async eliminarDistribucionTalle(
+    @Param() param: { id_talleDistribucion: number },
+  ) {
     try {
-      
-
       const distribucion = await MODELOS._distribucion.findOne({
-        where: { talle:{id:param.id_talleDistribucion} },
-        relations: ['producto','talle','local'],
+        where: { talle: { id: param.id_talleDistribucion } },
+        relations: ['producto', 'talle', 'local'],
       });
       console.log(distribucion);
 
-      distribucion.talle.map( async(x) => {
-        if (x.id == param.id_talleDistribucion){
-
+      distribucion.talle.map(async (x) => {
+        if (x.id == param.id_talleDistribucion) {
           distribucion.producto.cantidad_actual += x.cantidad;
           await MODELOS._distribucionTalles.remove(x);
 
           await MODELOS._productos.save(distribucion.producto);
-
         }
-      })
+      });
 
-
-      return{
+      return {
         ok: true,
-        message: 'Se elimino la distribucion correctamente'
-      }
-            
+        message: 'Se elimino la distribucion correctamente',
+      };
     } catch (error) {
       console.log(error);
       return {
@@ -268,12 +260,8 @@ export class DistribucionController {
         message: 'No se pudo eliminar la distribucion',
         error,
       };
-    
     }
-
   }
-
-
 
   //agregar fallas en ese producto, tambien descontar la cantidad de producto
   @Post('/fallas/:id')
@@ -362,16 +350,12 @@ export class DistribucionController {
     }
   }
 
-
-
-  //obtener distribucion con ID 
+  //obtener distribucion con ID
   @Get('/:id_producto')
-  async obtenerDistribucion( @Param() param: { id_producto: number; }){
-
+  async obtenerDistribucion(@Param() param: { id_producto: number }) {
     try {
-
       const [distribucion] = await MODELOS._productos.find({
-        where: { id:param.id_producto},
+        where: { id: param.id_producto },
         relations: ['estampado', 'distribucion.talle', 'distribucion.local'],
         select: {
           estampado: {
@@ -400,36 +384,26 @@ export class DistribucionController {
             },
           },
         },
-
       });
 
       return {
         ok: true,
         message: 'Se obtuvo la distribucion correctamente',
-        data:distribucion
+        data: distribucion,
       };
-
-      
-      
     } catch (error) {
-
       return {
         ok: false,
         message: 'No se pudo obtener la distribucion',
         error,
       };
-      
     }
   }
   @Delete('/full/delete/t/:id_producto')
-  async eliminarDisctribucionProducto(
-    @Param() param: {id_producto: number },
-  ){
-
+  async eliminarDisctribucionProducto(@Param() param: { id_producto: number }) {
     try {
-
       const producto = await MODELOS._productos.findOne({
-        where: { id:param.id_producto}, 
+        where: { id: param.id_producto },
         relations: ['estampado', 'distribucion'],
         select: {
           id: true,
@@ -440,40 +414,29 @@ export class DistribucionController {
           },
           distribucion: {
             id: true,
-          }
-        }
+          },
+        },
       });
 
-      producto.distribucion.map( async(x) => {
-
+      producto.distribucion.map(async (x) => {
         await MODELOS._distribucion.delete(x.id);
-
       });
 
-      if(producto.estampado != null){
-
+      if (producto.estampado != null) {
         await MODELOS._estampado.delete(producto.estampado.id);
-
-      };
-
+      }
 
       await MODELOS._productos.delete(producto.id);
 
-
       return {
         ok: true,
-        msg:"Se elimino correctamente"
-      }
-
-
-    
+        msg: 'Se elimino correctamente',
+      };
     } catch (error) {
       return {
         ok: false,
-        msg:error
-      }
-
+        msg: error,
+      };
     }
   }
-  
 }
