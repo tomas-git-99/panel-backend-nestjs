@@ -209,6 +209,7 @@ export class ProductosVentasController {
       const local = query.local || null;
       const categoria = query.categoria || null;
 
+
       const dataQuery = {
         codigo: query.codigo || null,
         dibujo: query.dibujo || null,
@@ -265,6 +266,9 @@ export class ProductosVentasController {
         .take(take)
         .skip(skip);
 
+      qb.andWhere('producto_ventas.estado = :estado', { estado: true });
+
+
       if (keyword != '') {
         qb.andWhere(
           new Brackets((qb) => {
@@ -308,6 +312,8 @@ export class ProductosVentasController {
         });
       }
 
+
+
       if (categoria != null) {
         qb.andWhere(
           new Brackets((qb) => {
@@ -347,7 +353,6 @@ export class ProductosVentasController {
         );
       }
 
-      qb.andWhere('producto_ventas.estado = :estado', { estado: true });
 
       // qb.orWhere("producto.modelo = :modelo", { modelo: `%${keyword}%`})
 
