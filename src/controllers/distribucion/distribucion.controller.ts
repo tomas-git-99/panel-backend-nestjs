@@ -20,7 +20,7 @@ import { Fallas } from 'src/models/produccion/fallas';
 import { Producto } from 'src/models/produccion/producto';
 import { Usuario } from 'src/models/usuarios/usuarios';
 import { MODELOS } from 'src/todos_modelos/modelos';
-import { Like } from 'typeorm';
+import { Brackets, Like } from 'typeorm';
 
 @Controller('distribucion')
 export class DistribucionController {
@@ -439,4 +439,97 @@ export class DistribucionController {
       };
     }
   }
+  @Get('/agrupar/search')
+  async getParaDistribucionParaUnir(
+    @Query()
+    query: {
+      keyword:string;
+    },) 
+  {
+
+    try {
+
+      const keyword = query.keyword || '';
+
+      const qb = await MODELOS._productoVentas
+        .createQueryBuilder('producto_ventas')
+        .leftJoinAndSelect(
+          'producto_ventas.productoDetalles',
+          'productoDetalles',
+        )
+        .leftJoinAndSelect('producto_ventas.sub_local', 'sub_local')
+        .leftJoinAndSelect('producto_ventas.categoria', 'categoria')
+        .leftJoinAndSelect('productoDetalles.local', 'local')
+        .leftJoinAndSelect('productoDetalles.producto', 'producto')
+        .leftJoinAndSelect('producto.estampado', 'estampado')
+        .leftJoinAndSelect('producto_ventas.talles_ventas', 'talles_ventas')
+
+        .select([
+          'producto_ventas.id',
+          'producto_ventas.precio',
+          'producto_ventas.color',
+          'producto_ventas.sub_modelo',
+          'producto_ventas.sub_dibujo',
+          'producto_ventas.sub_tela',
+          'producto_ventas.estado',
+          'sub_local.id',
+          'sub_local.nombre',
+
+          'talles_ventas.id',
+          'talles_ventas.cantidad',
+          'talles_ventas.talles',
+
+          'local.id',
+          'local.nombre',
+
+          'producto.id',
+          'producto.modelo',
+          'producto.codigo',
+          'producto.tela',
+          'producto.edad',
+
+          'productoDetalles.id',
+          'productoDetalles.estado_envio',
+
+          'estampado.id',
+          'estampado.dibujo',
+          'categoria.id',
+          'categoria.nombre',
+        ])
+
+        .orderBy('producto_ventas.id', 'DESC')
+
+      qb.andWhere('producto_ventas.estado = :estado', { estado: true });
+      if (keyword != '') {
+        qb.andWhere(
+          new Brackets((qb) => {
+            qb.where('producto_ventas.sub_modelo like :sub_modelo ', {
+              sub_modelo: `%${keyword}%`,
+            }).orWhere(' producto.modelo like :modelo', {
+              modelo: `%${keyword}%`,
+            });
+          }),
+        );
+      }
+      qb.orWhere("producto.codigo like :codigo ", { codigo: `%${keyword}%`})
+       /*  if (keyword != '') {
+          qb.orWhere('producto.modelo like :modelo ', { modelo: `%${keyword}%` });
+        } */
+
+      let [data, conteo] = await qb.getManyAndCount();
+
+      return {
+        ok: true,
+        data: data,
+        contador: conteo,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        message: error.message,
+      };
+    }
+
+  }
+
 }
