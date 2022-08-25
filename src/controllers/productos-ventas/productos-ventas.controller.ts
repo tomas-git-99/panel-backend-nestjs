@@ -265,8 +265,7 @@ export class ProductosVentasController {
         .orderBy('producto_ventas.id', 'DESC')
         .take(take)
         .skip(skip);
-
-      qb.andWhere('producto_ventas.estado = :estado', { estado: true });
+        qb.andWhere('producto_ventas.estado = :estado', { estado: true });
 
 
       if (keyword != '') {
@@ -336,6 +335,8 @@ export class ProductosVentasController {
                 
             } */
 
+
+
       if (local != null && local != 0) {
         //separarlo por la , y juntar en un array
         let locales = [];
@@ -345,10 +346,11 @@ export class ProductosVentasController {
 
         qb.andWhere(
           new Brackets((qb) => {
-            qb.where('local.id IN (:...id)', { id: locales }).orWhere(
+            qb.where('local.id IN (:...id)', { id: locales })
+            qb.orWhere(
               'sub_local.id IN (:...id)',
               { id: locales },
-            );
+            )
           }),
         );
       }
@@ -597,9 +599,15 @@ export class ProductosVentasController {
       distribucion.productoVentas = productoAgregar;
       distribucion.producto = grupo;
       distribucion.estado_envio = true;
-      distribucion.local = productoAgregar.sub_local;
-  
 
+      if(productoAgregar.sub_local == null){
+        return {
+          ok: false,
+          cod: 1,
+          msg:"Tienes que seleccionar un local antes de agrupar"
+        }
+      }
+      distribucion.local = productoAgregar.sub_local;
       await MODELOS._distribucion.save(distribucion);
 
       return {
