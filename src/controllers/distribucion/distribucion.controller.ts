@@ -204,7 +204,7 @@ export class DistribucionController {
       let contadorTotal: number = 0;
 
       distribucion.talle.map((e) => {
-        contadorTotal += e.cantidad_actual;
+        contadorTotal += e.cantidad;
       });
 
       distribucion.talle.map(async (e) => {

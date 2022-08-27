@@ -543,6 +543,21 @@ export class ProductosVentasController {
       let body = request.body as  unknown as Producto;
 
       body["sub_producto"] = true;
+
+      body.codigo
+
+      let verificarCodigo = await MODELOS._productos.find({where:{codigo:body.codigo}});
+
+      if(verificarCodigo.length > 0){
+
+        return{
+          ok: false,
+          cod:1,
+          msg: "Este codigo ya existe, porfavor use otro codigo"
+        }
+      }
+
+
       let result = MODELOS._productos.create(body);
 
       result.enviar_distribucion = true;

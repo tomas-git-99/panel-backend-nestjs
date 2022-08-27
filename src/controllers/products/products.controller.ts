@@ -379,7 +379,6 @@ export class ProductsController {
 
             dataTalles.talle.map(async (talles) => {
 
-
                 const productoTalles= this._tallesVentas.create({talles:talles.talle, cantidad: talles.cantidad_actual});
 
                 productoTalles.producto_ventas = productoDistribucion;
@@ -493,6 +492,35 @@ export class ProductsController {
          console.log(error)   
         }
     }
+
+
+    @Delete('/filtros/all/delete/d/hola')
+    async deletePrueba(): Promise<any>{
+
+
+        let eliminar = await MODELOS._productos.findOne(
+            {where:{id:1131},relations:['distribucion.talle']}
+        );
+
+        let arrayData =[406
+            ,407
+            ,408
+            ,413]
+         eliminar.distribucion.map( async(x) => {
+            if(arrayData.some(p => p == x.id)){
+
+                x.talle.map( async(y) => {
+                    await MODELOS._distribucionTalles.delete(y.id)
+                });
+
+                await MODELOS._distribucion.delete(x.id)
+
+            }
+        } )
+
+    }
+
+
     
 
 
