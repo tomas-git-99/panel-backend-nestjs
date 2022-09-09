@@ -312,6 +312,7 @@ export class ProductosVentasController {
       }
 
 
+      qb.andWhere('producto_ventas.estado = :estado', { estado: true });
 
       if (categoria != null) {
         qb.andWhere(
