@@ -1,9 +1,40 @@
-import { Controller, Get, Param, Post, Request } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Request } from '@nestjs/common';
 import { MODELOS } from 'src/todos_modelos/modelos';
 import { IsNull, Not } from 'typeorm';
 
 @Controller('local')
 export class LocalController {
+
+
+    //eliminar local, cambiado el estado a false
+    @Delete('/:id_local')
+    async eliminarLocal(@Param() param: { id_local:any}) {
+
+        try {
+
+            const local = await MODELOS._locales.findOne({where:{id:param.id_local}})
+
+            console.log(param.id_local)
+
+            local.estado = false;
+
+
+            await MODELOS._locales.save(local);
+
+            return{
+                ok:true,
+                msg:'se elimino con exito'
+            }
+            
+        } catch (error) {
+            return{
+                ok:false,
+                msg:'no se pudo eliminar'
+            }
+        }
+    }
+
+
 
     //obtener todos los locales
 
@@ -15,6 +46,7 @@ export class LocalController {
             
             const locales = await MODELOS._locales.find( 
                 {
+                    where:{estado:true},
                     select:{id:true, nombre:true}
                 }
             );
@@ -168,7 +200,7 @@ export class LocalController {
             await MODELOS._Permiso.save(permisos);
         })
 
-        console.log('hola')
+    
         return {
             ok: true,
             data: usuarios

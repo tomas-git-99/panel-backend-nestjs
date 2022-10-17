@@ -665,4 +665,109 @@ export class ProductosVentasController {
         contador: conteo,
       };
   }
+
+
+
+  @Post('/agregar/grupo/join/:id_producto_nuevo/:id_producto_viejo')
+  async postJoinBothProducts(
+    @Request() request: Request,
+    @Param() param: { id_producto_nuevo: number,id_producto_viejo:number },
+  ){
+
+    try {
+
+      const product = await MODELOS._distribucion.findOne({where:{id:param.id_producto_nuevo}, relations:['talle']});
+      
+      const productAdd = await MODELOS._productoVentas.findOne({where:{id:param.id_producto_viejo},relations: ['talles_ventas']});
+
+
+      product.talle.map( async(x)=> {
+        
+        let dataTalles = productAdd.talles_ventas.find( y => y.talles == x.talle);
+        dataTalles.cantidad += x.cantidad;
+        x.cantidad_actual = 0;
+
+        await MODELOS._tallesVentas.save(dataTalles);
+        await MODELOS._distribucionTalles.save(x);
+
+      });
+
+
+
+      console.log(product)
+      console.log(productAdd)
+    } catch (error) {
+      
+    }
+  }
+
+  @Delete('/todo/:id_local')
+  async deleteTodoDeUnLocal(
+    @Param() param: { id_local: any},
+  ){
+    try {
+      
+      let [data, contador] = 
+      await MODELOS._productoVentas
+      .createQueryBuilder('producto_ventas')
+     
+      .leftJoinAndSelect(
+        'producto_ventas.productoDetalles',
+        'productoDetalles',
+      )
+      .leftJoinAndSelect('productoDetalles.local', 'local')
+      .leftJoinAndSelect('producto_ventas.sub_local', 'sub_local')
+
+      .select([
+        'producto_ventas.id',
+        'producto_ventas.precio',
+        'producto_ventas.color',
+        'producto_ventas.sub_modelo',
+        'producto_ventas.sub_dibujo',
+        'producto_ventas.sub_local',
+        'producto_ventas.estado',
+    
+
+        'sub_local.id',
+        'sub_local.nombre',
+
+        'local.id',
+        'local.nombre',
+
+  
+
+        'productoDetalles.id',
+        'productoDetalles.estado_envio',
+
+        
+      ])
+      .where('local.id = :id', { id: param.id_local })
+      .andWhere('producto_ventas.estado = :estado', { estado:true})
+
+      .orWhere('sub_local.id like :id', { id: param.id_local })
+      .andWhere('producto_ventas.estado = :estado', { estado:true})
+
+
+      .getManyAndCount();
+
+      data.map( async(x) => {
+        x.estado = false;
+        
+        //await MODELOS._productoVentas.save(x);
+      })
+
+        return {
+          ok: true,
+          count:contador,
+
+          data: data,
+        };
+    } catch (error) {
+      console.log(error)
+      return {
+        ok: false,
+        data: error,
+      };
+    }
+  }
 }
