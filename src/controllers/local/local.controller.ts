@@ -22,21 +22,69 @@ export class LocalController {
 
       const local = await MODELOS._locales.findOne({
         where: {
-          id: param.id_local,
-          productosVentas: { estado: true},
-        },
-        relations: [
-          'productosVentas.productoDetalles',
-          'productosVentas.sub_local',
-        ],
+          id: param.id_local
+        }
       });
 
+
+      const qb = await MODELOS._productoVentas
+      .createQueryBuilder('producto_ventas')
+      .leftJoinAndSelect(
+        'producto_ventas.productoDetalles',
+        'productoDetalles',
+      )
+      .leftJoinAndSelect('producto_ventas.sub_local', 'sub_local')
+      .leftJoinAndSelect('producto_ventas.categoria', 'categoria')
+      .leftJoinAndSelect('productoDetalles.local', 'local')
+      .leftJoinAndSelect('productoDetalles.producto', 'producto')
+      .leftJoinAndSelect('producto.estampado', 'estampado')
+      .leftJoinAndSelect('producto_ventas.talles_ventas', 'talles_ventas')
+
+      .select([
+        'producto_ventas.id',
+        'producto_ventas.precio',
+        'producto_ventas.color',
+        'producto_ventas.sub_modelo',
+        'producto_ventas.sub_dibujo',
+        'producto_ventas.sub_tela',
+        'producto_ventas.estado',
+        'sub_local.id',
+        'sub_local.nombre',
+
+        'talles_ventas.id',
+        'talles_ventas.cantidad',
+        'talles_ventas.talles',
+
+        'local.id',
+        'local.nombre',
+
+        'producto.id',
+        'producto.modelo',
+        'producto.codigo',
+        'producto.tela',
+        'producto.edad',
+
+        'productoDetalles.id',
+        'productoDetalles.estado_envio',
+
+        'estampado.id',
+        'estampado.dibujo',
+        'categoria.id',
+        'categoria.nombre',
+      ])
+
+      .orderBy('producto_ventas.id', 'DESC')
+      qb.andWhere('producto_ventas.estado = :estado', { estado: true });
+      qb.andWhere('local.id = :id', { id: param.id_local })
+
+      let [data, conteo] = await qb.getManyAndCount();
       //let total = local.productosVentas.length;
 
-      local.productosVentas.map( async(x) => {
+      data.map( async(x) => {
         x.estado = false;
         await MODELOS._productoVentas.save(x)
       })
+
 
       local.estado = false;
 
@@ -45,7 +93,8 @@ export class LocalController {
       return {
         ok: true,
         msg: 'se elimino con exito',
-        data: local,
+        contador:conteo,
+        data: data,
       };
     } catch (error) {
       console.log(error);

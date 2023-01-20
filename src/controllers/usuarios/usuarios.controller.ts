@@ -259,12 +259,14 @@ export class UsuariosController {
 
         try {
 
+
+
             const usuario = await MODELOS._usuario.findOne({ where: { id: param.id }, 
                 relations:["permisos.permisosLocales", "permisos.permisosVentanas"] })
 
 
-             
-
+                console.log(usuario)
+            
             if(usuario.permisos && usuario.permisos.permisosLocales){
                 usuario.permisos.permisosLocales.map( async(x) => {
             await MODELOS._PermisoLocales.delete(x.id);
@@ -274,13 +276,12 @@ export class UsuariosController {
 
             if(usuario.permisos && usuario.permisos.permisosVentanas ){
                 usuario.permisos.permisosVentanas.map( async(x) => {
-            await MODELOS._PermisoVentanas.delete(x.id);
-
+                    await MODELOS._PermisoVentanas.delete(x.id);
                 })
             }
 
-
-            await MODELOS._Permiso.delete(usuario.permisos.id);
+            if(usuario.permisos) await MODELOS._Permiso.delete(usuario.permisos.id);
+        
             await MODELOS._usuario.delete(param.id);
             return {ok: true, msg: 'Usuario eliminado correctamente'}
         } catch (error) {
