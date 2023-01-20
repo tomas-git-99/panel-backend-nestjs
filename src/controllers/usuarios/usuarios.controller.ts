@@ -263,14 +263,16 @@ export class UsuariosController {
                 relations:["permisos.permisosLocales", "permisos.permisosVentanas"] })
 
 
-            if(usuario.permisos.permisosLocales){
+             
+
+            if(usuario.permisos && usuario.permisos.permisosLocales){
                 usuario.permisos.permisosLocales.map( async(x) => {
             await MODELOS._PermisoLocales.delete(x.id);
 
                 })
             }
 
-            if(usuario.permisos.permisosVentanas){
+            if(usuario.permisos && usuario.permisos.permisosVentanas ){
                 usuario.permisos.permisosVentanas.map( async(x) => {
             await MODELOS._PermisoVentanas.delete(x.id);
 
